@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' http://127.0.0.1:8787; img-src 'self' data:; object-src 'none'; base-uri 'none'">
+  <meta name="description" content="Microsoft MarkItDown으로 문서를 로컬에서 Markdown으로 변환하고 카테고리별로 관리합니다.">
+  <title>MarkItDown Vault</title>
+  <link rel="stylesheet" href="./static/styles.css">
+  <script src="./static/app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="주 메뉴">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">M↓</span>
+        <span><strong>MarkItDown</strong><small>LOCAL VAULT</small></span>
+      </div>
+
+      <nav class="nav-list">
+        <button class="nav-item active" type="button" data-view="convert">
+          <span aria-hidden="true">＋</span> 새 변환
+        </button>
+        <button class="nav-item" type="button" data-view="library">
+          <span aria-hidden="true">▤</span> 문서함 <em id="nav-doc-count">0</em>
+        </button>
+        <button class="nav-item" type="button" data-view="jobs">
+          <span aria-hidden="true">↻</span> 작업 기록
+        </button>
+      </nav>
+
+      <div class="sidebar-foot">
+        <div class="local-badge"><span></span> 이 컴퓨터에서만 실행</div>
+        <button id="copy-vault" class="vault-path" type="button" title="저장 경로 복사">
+          <span>저장 위치</span>
+          <code id="vault-path">불러오는 중…</code>
+        </button>
+      </div>
+    </aside>
+
+    <div class="main-column">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">DOCUMENT OPERATIONS</p>
+          <h1 id="view-title">새 변환</h1>
+        </div>
+        <div class="status-cluster">
+          <span class="status-pill" id="local-status"><i></i> 엔진 확인 중</span>
+          <button class="icon-button" id="refresh-all" type="button" aria-label="새로고침">↻</button>
+        </div>
+      </header>
+
+      <main>
+        <section class="companion-banner" id="companion-banner" hidden>
+          <div class="companion-copy">
+            <span class="companion-icon" aria-hidden="true">⌁</span>
+            <div>
+              <strong>로컬 동반 프로그램을 연결하세요</strong>
+              <p>파일과 API 키를 이 컴퓨터 밖으로 보내지 않기 위해 변환 엔진은 PC에서 실행됩니다.</p>
+              <ol><li>설치 파일을 받고 압축을 풉니다.</li><li><b>Install-Windows.cmd</b>를 더블클릭합니다.</li></ol>
+            </div>
+          </div>
+          <div class="companion-actions">
+            <a class="primary-small" href="https://github.com/sjk3446/markitdown-vault/archive/refs/heads/main.zip">Windows용 받기</a>
+            <button class="secondary-button" id="retry-connection" type="button">다시 연결</button>
+          </div>
+        </section>
+
+        <section class="view active" id="view-convert" aria-labelledby="view-title">
+          <div class="section-intro">
+            <div>
+              <h2>문서를 Markdown으로</h2>
+              <p>파일을 올리고 저장할 카테고리와 변환 방식을 선택하세요.</p>
+            </div>
+            <span class="privacy-note">파일은 외부 서버에 저장되지 않습니다</span>
+          </div>
+
+          <form id="convert-form">
+            <div class="convert-grid">
+              <div class="stack">
+                <section class="panel upload-panel">
+                  <div class="panel-heading">
+                    <div><span class="step">01</span><h3>입력 문서</h3></div>
+                    <span class="meta-label">여러 파일 가능</span>
+                  </div>
+                  <label class="dropzone" id="dropzone" for="file-input">
+                    <span class="drop-icon" aria-hidden="true">⇧</span>
+                    <strong>파일을 놓거나 클릭해서 선택</strong>
+                    <span>PDF · PPTX · DOCX · XLSX · 이미지 · 오디오 · ZIP 외</span>
+                    <input id="file-input" name="files" type="file" multiple>
+                  </label>
+                  <div class="file-list" id="file-list" aria-live="polite"></div>
+                  <div class="url-row">
+                    <span>또는 URL</span>
+                    <input id="remote-url" type="url" placeholder="https://… (YouTube, 웹 문서)">
+                  </div>
+                </section>
+
+                <section class="panel">
+                  <div class="panel-heading">
+                    <div><span class="step">02</span><h3>저장 카테고리</h3></div>
+                    <button class="text-button" id="open-category-dialog" type="button">＋ 새 카테고리</button>
+                  </div>
+                  <label class="field-label" for="category-select">변환된 Markdown을 저장할 위치</label>
+                  <select id="category-select" name="category"></select>
+                </section>
+              </div>
+
+              <div class="stack">
+                <section class="panel">
+                  <div class="panel-heading">
+                    <div><span class="step">03</span><h3>변환 방식</h3></div>
+                    <span class="meta-label">작업별 선택</span>
+                  </div>
+                  <div class="provider-grid" role="radiogroup" aria-label="변환 방식">
+                    <label class="provider-card selected">
+                      <input type="radio" name="provider" value="none" checked>
+                      <span class="provider-top"><b>LOCAL</b><em>크레딧 0</em></span>
+                      <strong>MarkItDown 기본</strong>
+                      <small>빠른 문서 구조 추출</small>
+                    </label>
+                    <label class="provider-card">
+                      <input type="radio" name="provider" value="gemini">
+                      <span class="provider-top"><b>GEMINI</b><em id="gemini-key-state">키 입력</em></span>
+                      <strong>Google Gemini</strong>
+                      <small>이미지 설명·OCR 보강</small>
+                    </label>
+                    <label class="provider-card">
+                      <input type="radio" name="provider" value="openai">
+                      <span class="provider-top"><b>OPENAI</b><em id="openai-key-state">키 입력</em></span>
+                      <strong>OpenAI</strong>
+                      <small>이미지 설명·OCR 보강</small>
+                    </label>
+                  </div>
+
+                  <div id="ai-settings" class="ai-settings" hidden>
+                    <div class="form-grid two">
+                      <label><span>모델</span><input id="model-input" type="text" placeholder="기본 모델 사용"></label>
+                      <div class="credential-field">
+                        <label for="api-key-input">API 키 <small>입력 후 안전하게 저장 가능</small></label>
+                        <div class="credential-input-row">
+                          <input id="api-key-input" type="password" autocomplete="off" placeholder="API 키 입력">
+                          <button class="credential-save" id="save-api-key" type="button">키 저장</button>
+                          <button class="credential-delete" id="delete-api-key" type="button" hidden>삭제</button>
+                        </div>
+                        <small class="credential-note" id="credential-note">입력한 키는 저장하지 않으면 이번 변환에만 사용됩니다.</small>
+                      </div>
+                    </div>
+                    <label><span>이미지 분석 지침 <small>선택</small></span><input id="llm-prompt" type="text" placeholder="예: 표와 다이어그램의 관계를 자세히 설명"></label>
+                  </div>
+
+                  <details class="advanced">
+                    <summary>고급 옵션</summary>
+                    <div class="advanced-grid">
+                      <label><span>변환 엔진</span>
+                        <select id="engine-select">
+                          <option value="builtin">MarkItDown 기본</option>
+                          <option value="docintel">Azure Document Intelligence</option>
+                          <option value="cu">Azure Content Understanding</option>
+                        </select>
+                      </label>
+                      <label class="check-row"><input id="ocr-check" type="checkbox"><span><b>OCR 플러그인</b><small>스캔 PDF·이미지 문자 인식</small></span></label>
+                      <label class="check-row"><input id="plugins-check" type="checkbox"><span><b>플러그인 활성화</b><small>설치된 확장 변환기 사용</small></span></label>
+                      <label class="check-row"><input id="copy-source-check" type="checkbox" checked><span><b>원본도 보관</b><small>로컬 문서함 sources 폴더</small></span></label>
+                      <label class="check-row"><input id="audio-network-check" type="checkbox"><span><b>오디오 전송 허용</b><small>음성 인식 서비스 사용 시 필요</small></span></label>
+                      <label class="check-row"><input id="force-check" type="checkbox"><span><b>중복이어도 새로 변환</b><small>기존 결과 재사용 안 함</small></span></label>
+                    </div>
+                  </details>
+                </section>
+
+                <button class="primary-action" id="convert-button" type="submit">
+                  <span>Markdown 변환 시작</span><b aria-hidden="true">→</b>
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <section class="queue-section" id="live-job-section" hidden>
+            <div class="section-heading"><h2>현재 작업</h2><span id="live-job-label"></span></div>
+            <div id="live-job"></div>
+          </section>
+        </section>
+
+        <section class="view" id="view-library">
+          <div class="library-toolbar">
+            <div class="search-box"><span aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="제목과 본문 검색"></div>
+            <select id="library-category" aria-label="카테고리 필터"><option value="">모든 카테고리</option></select>
+          </div>
+          <div class="library-summary">
+            <p><strong id="library-count">0</strong>개 문서</p>
+            <button class="text-button" id="go-convert" type="button">＋ 새 문서 변환</button>
+          </div>
+          <div class="document-list" id="document-list"></div>
+          <div class="empty-state" id="document-empty" hidden>
+            <span>◇</span><strong>아직 저장된 문서가 없습니다</strong><p>첫 파일을 Markdown으로 변환해 보세요.</p>
+          </div>
+        </section>
+
+        <section class="view" id="view-jobs">
+          <div class="section-intro compact">
+            <div><h2>작업 기록</h2><p>현재 실행 중인 변환과 이번 세션의 완료 결과입니다.</p></div>
+          </div>
+          <div class="jobs-list" id="jobs-list"></div>
+          <div class="empty-state" id="jobs-empty" hidden>
+            <span>↻</span><strong>이번 세션의 작업이 없습니다</strong>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <dialog id="category-dialog">
+    <form method="dialog" class="dialog-card" id="category-form">
+      <div class="dialog-head"><div><p class="eyebrow">ORGANIZE</p><h2>새 카테고리</h2></div><button class="icon-button" value="cancel" aria-label="닫기">×</button></div>
+      <label><span>카테고리 이름</span><input id="new-category-name" type="text" required placeholder="예: 업무/프로젝트 A"></label>
+      <p class="field-help">슬래시(/)를 사용하면 하위 카테고리를 만들 수 있습니다.</p>
+      <div class="dialog-actions"><button class="secondary-button" value="cancel">취소</button><button class="primary-small" id="create-category" type="submit">만들기</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="preview-dialog" class="preview-dialog">
+    <div class="preview-card">
+      <div class="preview-head">
+        <div><p class="eyebrow" id="preview-category">CATEGORY</p><h2 id="preview-title">문서</h2></div>
+        <div class="preview-actions"><a class="secondary-button" id="download-link" href="#">MD 다운로드</a><button class="icon-button" id="close-preview" type="button" aria-label="닫기">×</button></div>
+      </div>
+      <div class="preview-meta" id="preview-meta"></div>
+      <div class="move-row"><label for="move-category">카테고리 이동</label><select id="move-category"></select><button class="text-button" id="move-document" type="button">이동</button></div>
+      <pre id="preview-content"></pre>
+      <p class="preview-truncated" id="preview-truncated" hidden>미리보기는 200,000자까지만 표시됩니다. 전체 내용은 MD 파일을 내려받아 확인하세요.</p>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
