@@ -53,6 +53,7 @@ function friendlyErrorMessage(error) {
     [/--ocr requires --provider/i, "AI OCR 보강을 사용하려면 Gemini, OpenAI 또는 Claude 중 하나를 먼저 선택해 주세요."],
     [/markitdown-ocr is not installed/i, "AI OCR 구성 요소가 설치되지 않았습니다. Windows 전체 모드 설치 파일을 다시 실행해 주세요."],
     [/Microsoft MarkItDown is not installed/i, "Microsoft MarkItDown이 설치되지 않았습니다. Windows 전체 모드 설치 파일을 다시 실행해 주세요."],
+    [/Docling.*not installed|No module named ['"]docling/i, "Docling 고정밀 로컬 엔진이 설치되지 않았습니다. Windows 설치 파일을 다시 실행해 주세요."],
     [/openai compatibility package is not installed/i, "외부 AI 연결 구성 요소가 설치되지 않았습니다. Windows 전체 모드 설치 파일을 다시 실행해 주세요."],
     [/Remote input requires --allow-remote/i, "웹 주소 변환 권한이 꺼져 있습니다. 파일을 직접 올리거나 Windows 전체 모드의 URL 변환 설정을 확인해 주세요."],
     [/Built-in audio transcription sends audio/i, "오디오 음성 인식에는 외부 전송 동의가 필요합니다. 고급 옵션에서 ‘오디오 전송 허용’을 선택해 주세요."],
@@ -197,6 +198,49 @@ function configureRuntimeUi() {
     $(selector).disabled = browserMode;
   });
   $("#retry-connection").textContent = browserMode ? "PC 엔진 연결" : "다시 연결";
+  updateEngineUi();
+}
+
+function updateEngineUi() {
+  const engine = $("#engine-select").value;
+  const docling = engine === "docling";
+  const aiRadios = $$('.provider-card input[name="provider"]:not([value="none"])');
+  if (docling) {
+    const local = $('input[name="provider"][value="none"]');
+    if (local) local.checked = true;
+    updateProviderPanel();
+  }
+  aiRadios.forEach((radio) => {
+    radio.disabled = runtimeMode === "browser" || docling;
+  });
+  $$(".provider-card").forEach((card) => {
+    const external = card.querySelector("input").value !== "none";
+    card.classList.toggle("unavailable", external && (runtimeMode === "browser" || docling));
+  });
+  const copy = docling ? {
+    label: "Docling 고정밀 로컬",
+    kicker: "고정밀 로컬 변환 엔진 · 선택됨",
+    name: "Docling",
+    description: "레이아웃·표·수식·읽기 순서·OCR을 PC에서 정밀 분석합니다.",
+    help: "API 크레딧과 외부 전송 없이 실행됩니다. MarkItDown보다 오래 걸리고 메모리를 더 사용할 수 있습니다.",
+  } : {
+    label: engine === "builtin" ? "MarkItDown 기본" : "클라우드 변환 엔진",
+    kicker: engine === "builtin" ? "기본 로컬 변환 엔진" : "선택한 외부 변환 엔진",
+    name: engine === "builtin" ? "Microsoft MarkItDown" : $("#engine-select").selectedOptions[0].textContent,
+    description: engine === "builtin"
+      ? "문서 구조·텍스트·표를 빠르게 로컬에서 추출합니다."
+      : "선택한 Azure 서비스로 문서를 전송해 변환합니다.",
+    help: engine === "builtin"
+      ? "일반 문서는 빠른 MarkItDown 기본을 권장합니다."
+      : "Azure 사용량에 따라 비용이 발생하며 별도 연결 설정이 필요합니다.",
+  };
+  $("#active-engine-label").textContent = copy.label;
+  $("#base-engine-kicker").textContent = copy.kicker;
+  $("#base-engine-name").textContent = copy.name;
+  $("#base-engine-description").textContent = copy.description;
+  $("#engine-help").textContent = runtimeMode === "browser" && docling
+    ? "Docling은 Windows 전체 모드에서 사용할 수 있습니다."
+    : copy.help;
 }
 
 async function loadCategories(selected) {
@@ -600,6 +644,7 @@ function bindEvents() {
   }));
   dropzone.addEventListener("drop", (event) => addFiles(event.dataTransfer.files));
   $$("input[name='provider']").forEach((radio) => radio.addEventListener("change", updateProviderPanel));
+  $("#engine-select").addEventListener("change", updateEngineUi);
   $("#save-api-key").addEventListener("click", saveCurrentApiKey);
   $("#delete-api-key").addEventListener("click", deleteCurrentApiKey);
   $("#convert-form").addEventListener("submit", submitConversion);

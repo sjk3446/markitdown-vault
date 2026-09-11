@@ -1,6 +1,6 @@
 ---
 name: markitdown-vault
-description: Convert local documents and supported URLs to Markdown with Microsoft MarkItDown, organize results in a searchable local category vault, and retrieve or move archived Markdown later. Use for PDF, PowerPoint, Word, Excel, image, audio, HTML, CSV, JSON, XML, ZIP, EPUB, Outlook, and YouTube-to-Markdown requests. Supports local conversion by default and explicit OpenAI, Gemini, Claude, Azure Document Intelligence, or Azure Content Understanding enhancement.
+description: Convert local documents and supported URLs to Markdown with Microsoft MarkItDown or the optional high-accuracy local Docling engine, organize results in a searchable local category vault, and retrieve or move archived Markdown later. Use for PDF, PowerPoint, Word, Excel, image, audio, HTML, CSV, JSON, XML, ZIP, EPUB, Outlook, and YouTube-to-Markdown requests. Supports optional OpenAI, Gemini, Claude, Azure Document Intelligence, or Azure Content Understanding enhancement.
 ---
 
 # MarkItDown Vault
@@ -10,6 +10,7 @@ Use the bundled local browser app or CLI to convert and archive documents withou
 ## Cost and privacy rule
 
 - Default to `--provider none --engine builtin`. This uses local MarkItDown conversion and consumes no OpenAI, Gemini, or Claude API credits.
+- `--provider none --engine docling` performs higher-accuracy layout, table, formula, reading-order, and OCR analysis locally. It uses no API credits, but first installation/model preparation requires a download and conversion uses more CPU, memory, and time.
 - Use `--provider openai`, `--provider gemini`, or `--provider claude` only when the user explicitly chooses it or asks for LLM image description/OCR and selects that provider.
 - CLI API keys must come from `OPENAI_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_API_KEY`, or `ANTHROPIC_API_KEY`. A browser key is one-job-only unless the user explicitly chooses the save-key action. Saved browser keys must use the current Windows user's Credential Manager; never store them in browser storage, source files, Markdown, SQLite, metadata, logs, or chat responses.
 - Google AI Pro and Gemini Developer API billing and quotas are separate. Do not claim that an AI Pro subscription supplies paid API credits.
@@ -46,7 +47,7 @@ If the default port is occupied, select another loopback port. Never expose the 
 
 ### Public GitHub Pages interface
 
-The public interface is `https://sjk3446.github.io/markitdown-vault/`. It is static and contains no document-processing backend. On phones and when the companion is unavailable, supported files are converted in-browser and stored in IndexedDB on that device; never add a hosted upload fallback. PDF, DOCX, PPTX, XLS/XLSX, ODS, CSV/TSV, HTML, JSON, XML, EPUB, ZIP, text, and basic image/audio metadata are supported in this browser-local mode. OCR, LLM enhancement, URLs, transcription, Outlook, plugins, and Azure engines require the Windows companion. When the companion is available, API, upload, search, download, and credential requests go directly to `http://127.0.0.1:8787`. Keep the allowed public origin exact and preserve Private Network preflight support.
+The public interface is `https://sjk3446.github.io/markitdown-vault/`. It is static and contains no document-processing backend. On phones and when the companion is unavailable, supported files are converted in-browser and stored in IndexedDB on that device; never add a hosted upload fallback. PDF, DOCX, PPTX, XLS/XLSX, ODS, CSV/TSV, HTML, JSON, XML, EPUB, ZIP, text, and basic image/audio metadata are supported in this browser-local mode. Docling, OCR, LLM enhancement, URLs, transcription, Outlook, plugins, and Azure engines require the Windows companion. When the companion is available, API, upload, search, download, and credential requests go directly to `http://127.0.0.1:8787`. Keep the allowed public origin exact and preserve Private Network preflight support.
 
 ## Convert and archive
 
@@ -62,7 +63,7 @@ scripts/mdvault.ps1 convert <path> --category <category> --provider gemini --ocr
 - `--model` overrides the provider's configurable default.
 - `--ocr` enables the MarkItDown OCR plugin and requires an LLM provider.
 - `--plugins` enables all installed MarkItDown plugins.
-- `--engine builtin|docintel|cu` selects local, Azure Document Intelligence, or Azure Content Understanding conversion.
+- `--engine builtin|docling|docintel|cu` selects fast local MarkItDown, high-accuracy local Docling, Azure Document Intelligence, or Azure Content Understanding conversion. Docling requires `--provider none`.
 - Built-in audio transcription contacts Google's speech service and requires `--allow-network-transcription`.
 - `--copy-source` stores a copy of the original in the vault.
 - `--force` bypasses content/category/provider deduplication.

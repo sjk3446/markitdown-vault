@@ -17,6 +17,7 @@ Windows 브라우저 ──► 127.0.0.1 로컬 MarkItDown ──► 사용자\M
 - Windows 전체 모드에서는 변환기가 사용자 PC의 `127.0.0.1`에서만 실행됩니다.
 - 저장한 Gemini/OpenAI/Claude 키는 Windows 자격 증명 관리자에 보관됩니다.
 - 기본 LOCAL 변환은 OpenAI/Gemini/Claude 크레딧을 사용하지 않습니다.
+- Docling 고정밀 로컬 엔진도 API 크레딧과 문서 외부 전송 없이 PC에서 실행됩니다. 첫 설치 시 엔진과 모델 구성 요소를 내려받으며, 기본 MarkItDown보다 처리 시간이 길고 메모리를 더 사용할 수 있습니다.
 - Gemini/OpenAI/Claude/Azure를 직접 선택하면 필요한 내용만 해당 제공자의 API로 전송될 수 있습니다.
 - Gemini API 사용량과 Google AI Pro 구독은 별도입니다.
 
@@ -37,6 +38,7 @@ Python 3.10-3.13이 없으면 Windows Package Manager를 통해 Python 3.12 설�
 - ZIP, Outlook MSG, RSS/Atom
 - 로컬/Gemini/OpenAI/Claude 제공자 선택
 - Azure Document Intelligence 및 Azure Content Understanding 선택
+- Docling 고정밀 로컬 변환(OCR, 표, 수식, 읽기 순서 분석)
 - 카테고리, 전체 텍스트 검색, 미리보기, 이동, MD 다운로드
 - SHA-256 기반 중복 방지와 선택적 원본 보관
 

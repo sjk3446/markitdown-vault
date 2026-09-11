@@ -130,15 +130,15 @@
                 <section class="panel">
                   <div class="panel-heading">
                     <div><span class="step">03</span><h3>변환 설정</h3></div>
-                    <span class="meta-label">MarkItDown 항상 사용</span>
+                    <span class="meta-label" id="active-engine-label">MarkItDown 기본</span>
                   </div>
 
-                  <div class="base-engine-card" aria-label="기본 변환 엔진 Microsoft MarkItDown, 항상 사용">
+                  <div class="base-engine-card" aria-live="polite">
                     <span class="base-engine-icon" aria-hidden="true">✓</span>
                     <span class="base-engine-copy">
-                      <span>기본 변환 엔진 · 항상 사용</span>
-                      <strong>Microsoft MarkItDown</strong>
-                      <small>문서 구조·텍스트·표를 로컬에서 추출합니다.</small>
+                      <span id="base-engine-kicker">기본 로컬 변환 엔진</span>
+                      <strong id="base-engine-name">Microsoft MarkItDown</strong>
+                      <small id="base-engine-description">문서 구조·텍스트·표를 빠르게 로컬에서 추출합니다.</small>
                     </span>
                     <em>크레딧 0</em>
                   </div>
@@ -196,9 +196,11 @@
                       <label><span>변환 엔진</span>
                         <select id="engine-select">
                           <option value="builtin">MarkItDown 기본</option>
+                          <option value="docling">Docling 고정밀 로컬 · 크레딧 0</option>
                           <option value="docintel">Azure Document Intelligence</option>
                           <option value="cu">Azure Content Understanding</option>
                         </select>
+                        <small id="engine-help">일반 문서는 빠른 MarkItDown 기본을 권장합니다.</small>
                       </label>
                       <label class="check-row" id="ocr-option"><input id="ocr-check" type="checkbox"><span><b>AI OCR 보강</b><small>외부 AI 선택 시 스캔 PDF·이미지 문자 인식</small></span></label>
                       <label class="check-row"><input id="plugins-check" type="checkbox"><span><b>플러그인 활성화</b><small>설치된 확장 변환기 사용</small></span></label>

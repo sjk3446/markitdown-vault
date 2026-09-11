@@ -23,6 +23,13 @@ Provider selection affects optional LLM calls made by MarkItDown; it does not mo
 
 Google AI Pro is a consumer subscription and does not itself guarantee paid Gemini Developer API quota or credits. The API key's Google Cloud/AI Studio project controls quota and billing.
 
+## Docling local engine
+
+- `--engine docling --provider none`: high-accuracy local document conversion with layout, table, formula, reading-order, and OCR analysis.
+- Docling consumes no OpenAI, Gemini, Claude, or Azure API credits and does not upload documents to a conversion server.
+- Initial installation and first model preparation may download dependencies or model assets. Later conversion runs locally and can require substantially more CPU, memory, and time than the built-in MarkItDown engine.
+- Docling and external AI image/OCR enhancement are intentionally mutually exclusive in this app so a local-only selection cannot accidentally use an API.
+
 ## Azure engines
 
 - `--engine docintel`: Azure Document Intelligence layout extraction. Requires `MARKITDOWN_DOCINTEL_ENDPOINT` or `--docintel-endpoint`, plus Azure credentials supported by MarkItDown.

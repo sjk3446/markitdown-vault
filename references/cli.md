@@ -20,7 +20,7 @@ mdvault.ps1 formats
 mdvault.ps1 categories [--json]
 mdvault.ps1 convert SOURCE... [--category NAME] [--recursive]
     [--provider none|openai|gemini|claude] [--model NAME] [--llm-prompt TEXT]
-    [--ocr] [--plugins] [--engine builtin|docintel|cu]
+    [--ocr] [--plugins] [--engine builtin|docling|docintel|cu]
     [--docintel-endpoint URL] [--cu-endpoint URL] [--cu-analyzer-id ID]
     [--title TEXT] [--copy-source] [--allow-remote]
     [--allow-network-transcription] [--force] [--json]
