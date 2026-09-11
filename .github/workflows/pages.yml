@@ -29,6 +29,13 @@ jobs:
           cp web/index.html _site/index.html
           cp web/styles.css _site/static/styles.css
           cp web/app.js _site/static/app.js
+          cp web/browser-vault.js _site/static/browser-vault.js
+          cp web/microsoft-logo.png _site/static/microsoft-logo.png
+          cp -R web/vendor _site/static/vendor
+          cp web/manifest.webmanifest _site/manifest.webmanifest
+          cp web/icon.svg _site/icon.svg
+          cp web/sw.js _site/sw.js
+          cp THIRD_PARTY_NOTICES.md _site/THIRD_PARTY_NOTICES.md
           touch _site/.nojekyll
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -39,4 +46,3 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-

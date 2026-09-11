@@ -20,10 +20,12 @@ from typing import Any, Iterable
 from urllib.parse import urlparse
 
 
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+CLAUDE_BASE_URL = "https://api.anthropic.com/v1/"
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
 DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
+DEFAULT_CLAUDE_MODEL = "claude-sonnet-5"
 INVALID_PATH_CHARS = re.compile(r'[<>:"\\|?*\x00-\x1f]')
 WORD_RE = re.compile(r"\w+", re.UNICODE)
 AUDIO_EXTENSIONS = {".wav", ".mp3", ".m4a", ".mp4", ".aiff", ".aif", ".flac"}
@@ -396,12 +398,21 @@ def build_llm(provider: str, model: str | None) -> tuple[Any | None, str | None]
         return OpenAI(api_key=key), model or os.getenv(
             "MARKITDOWN_OPENAI_MODEL", DEFAULT_OPENAI_MODEL
         )
-    key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
-    if not key:
-        raise UserError("GEMINI_API_KEY or GOOGLE_API_KEY is not configured.")
-    return OpenAI(api_key=key, base_url=GEMINI_BASE_URL), model or os.getenv(
-        "MARKITDOWN_GEMINI_MODEL", DEFAULT_GEMINI_MODEL
-    )
+    if provider == "gemini":
+        key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        if not key:
+            raise UserError("GEMINI_API_KEY or GOOGLE_API_KEY is not configured.")
+        return OpenAI(api_key=key, base_url=GEMINI_BASE_URL), model or os.getenv(
+            "MARKITDOWN_GEMINI_MODEL", DEFAULT_GEMINI_MODEL
+        )
+    if provider == "claude":
+        key = os.getenv("ANTHROPIC_API_KEY")
+        if not key:
+            raise UserError("ANTHROPIC_API_KEY is not configured.")
+        return OpenAI(api_key=key, base_url=CLAUDE_BASE_URL), model or os.getenv(
+            "MARKITDOWN_CLAUDE_MODEL", DEFAULT_CLAUDE_MODEL
+        )
+    raise UserError(f"Unsupported LLM provider: {provider}")
 
 
 def build_converter(args: argparse.Namespace) -> tuple[Any, str | None]:
@@ -422,7 +433,7 @@ def build_converter(args: argparse.Namespace) -> tuple[Any, str | None]:
         pass
     client, model = build_llm(args.provider, args.model)
     if args.ocr and args.provider == "none":
-        raise UserError("--ocr requires --provider openai or --provider gemini.")
+        raise UserError("--ocr requires --provider openai, gemini, or claude.")
     if args.ocr and distribution_version("markitdown-ocr") is None:
         raise UserError("markitdown-ocr is not installed. Run setup.ps1.")
     options: dict[str, Any] = {"enable_plugins": bool(args.plugins or args.ocr)}
@@ -583,7 +594,7 @@ def add_convert_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("sources", nargs="+")
     parser.add_argument("--category", default="inbox")
     parser.add_argument("--recursive", action="store_true")
-    parser.add_argument("--provider", choices=("none", "openai", "gemini"), default="none")
+    parser.add_argument("--provider", choices=("none", "openai", "gemini", "claude"), default="none")
     parser.add_argument("--model")
     parser.add_argument("--llm-prompt")
     parser.add_argument("--ocr", action="store_true")
@@ -659,6 +670,7 @@ def command_status(vault: Vault) -> None:
         "gemini_key_configured": bool(
             os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         ),
+        "claude_key_configured": bool(os.getenv("ANTHROPIC_API_KEY")),
         "docintel_endpoint_configured": bool(os.getenv("MARKITDOWN_DOCINTEL_ENDPOINT")),
         "cu_endpoint_configured": bool(os.getenv("MARKITDOWN_CU_ENDPOINT")),
     }

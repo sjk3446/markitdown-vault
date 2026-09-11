@@ -1,6 +1,6 @@
 ---
 name: markitdown-vault
-description: Convert local documents and supported URLs to Markdown with Microsoft MarkItDown, organize results in a searchable local category vault, and retrieve or move archived Markdown later. Use for PDF, PowerPoint, Word, Excel, image, audio, HTML, CSV, JSON, XML, ZIP, EPUB, Outlook, and YouTube-to-Markdown requests. Supports local conversion by default and explicit OpenAI, Gemini, Azure Document Intelligence, or Azure Content Understanding enhancement.
+description: Convert local documents and supported URLs to Markdown with Microsoft MarkItDown, organize results in a searchable local category vault, and retrieve or move archived Markdown later. Use for PDF, PowerPoint, Word, Excel, image, audio, HTML, CSV, JSON, XML, ZIP, EPUB, Outlook, and YouTube-to-Markdown requests. Supports local conversion by default and explicit OpenAI, Gemini, Claude, Azure Document Intelligence, or Azure Content Understanding enhancement.
 ---
 
 # MarkItDown Vault
@@ -9,9 +9,9 @@ Use the bundled local browser app or CLI to convert and archive documents withou
 
 ## Cost and privacy rule
 
-- Default to `--provider none --engine builtin`. This uses local MarkItDown conversion and consumes no OpenAI or Gemini API credits.
-- Use `--provider openai` or `--provider gemini` only when the user explicitly chooses it or asks for LLM image description/OCR and selects that provider.
-- CLI API keys must come from `OPENAI_API_KEY`, `GEMINI_API_KEY`, or `GOOGLE_API_KEY`. A browser key is one-job-only unless the user explicitly chooses the save-key action. Saved browser keys must use the current Windows user's Credential Manager; never store them in browser storage, source files, Markdown, SQLite, metadata, logs, or chat responses.
+- Default to `--provider none --engine builtin`. This uses local MarkItDown conversion and consumes no OpenAI, Gemini, or Claude API credits.
+- Use `--provider openai`, `--provider gemini`, or `--provider claude` only when the user explicitly chooses it or asks for LLM image description/OCR and selects that provider.
+- CLI API keys must come from `OPENAI_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_API_KEY`, or `ANTHROPIC_API_KEY`. A browser key is one-job-only unless the user explicitly chooses the save-key action. Saved browser keys must use the current Windows user's Credential Manager; never store them in browser storage, source files, Markdown, SQLite, metadata, logs, or chat responses.
 - Google AI Pro and Gemini Developer API billing and quotas are separate. Do not claim that an AI Pro subscription supplies paid API credits.
 - Azure engines make billable cloud calls. Use them only when explicitly requested.
 - Read [references/formats-and-costs.md](references/formats-and-costs.md) when choosing a converter, provider, OCR mode, or Azure engine.
@@ -40,13 +40,13 @@ scripts/start-web.ps1 -Vault "C:\absolute\vault\path"
 
 From the workspace root, `Start-MarkItDown-Vault.cmd` provides a double-click launcher.
 
-The app supports multi-file drag and drop, URL conversion, per-job local/Gemini/OpenAI selection, secure API-key save/delete, model and OCR options, category creation, progress tracking, full-text search, Markdown preview/download, and category moves. It binds to `127.0.0.1` only and persists documents in the same vault used by the CLI. Job history is session-only; converted Markdown, index data, optional source copies, and explicitly saved Windows credentials persist locally.
+The app supports multi-file drag and drop, URL conversion, per-job local/Gemini/OpenAI/Claude selection, secure API-key save/delete, model and OCR options, category creation, progress tracking, full-text search, Markdown preview/download, and category moves. It binds to `127.0.0.1` only and persists documents in the same vault used by the CLI. Job history is session-only; converted Markdown, index data, optional source copies, and explicitly saved Windows credentials persist locally.
 
 If the default port is occupied, select another loopback port. Never expose the server through `0.0.0.0`. A key typed but not explicitly saved must be removed from process memory after its job.
 
 ### Public GitHub Pages interface
 
-The public interface is `https://sjk3446.github.io/markitdown-vault/`. It is static and contains no document-processing backend. Every API, upload, search, download, and credential request goes directly from the browser to the user's loopback companion at `http://127.0.0.1:8787`. Keep the allowed public origin exact, preserve Private Network preflight support, and never add a hosted upload fallback.
+The public interface is `https://sjk3446.github.io/markitdown-vault/`. It is static and contains no document-processing backend. On phones and when the companion is unavailable, supported files are converted in-browser and stored in IndexedDB on that device; never add a hosted upload fallback. PDF, DOCX, PPTX, XLS/XLSX, ODS, CSV/TSV, HTML, JSON, XML, EPUB, ZIP, text, and basic image/audio metadata are supported in this browser-local mode. OCR, LLM enhancement, URLs, transcription, Outlook, plugins, and Azure engines require the Windows companion. When the companion is available, API, upload, search, download, and credential requests go directly to `http://127.0.0.1:8787`. Keep the allowed public origin exact and preserve Private Network preflight support.
 
 ## Convert and archive
 
@@ -58,7 +58,7 @@ scripts/mdvault.ps1 convert <folder> --recursive --category <category>
 scripts/mdvault.ps1 convert <path> --category <category> --provider gemini --ocr
 ```
 
-- `--provider none|openai|gemini` selects LLM use per conversion. `none` is the default.
+- `--provider none|openai|gemini|claude` selects LLM use per conversion. `none` is the default.
 - `--model` overrides the provider's configurable default.
 - `--ocr` enables the MarkItDown OCR plugin and requires an LLM provider.
 - `--plugins` enables all installed MarkItDown plugins.

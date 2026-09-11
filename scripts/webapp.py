@@ -23,6 +23,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, SecretStr
 
 from mdvault import (
+    DEFAULT_CLAUDE_MODEL,
     DEFAULT_GEMINI_MODEL,
     DEFAULT_OPENAI_MODEL,
     UserError,
@@ -48,6 +49,7 @@ CREDENTIAL_SERVICE = os.getenv("MARKITDOWN_CREDENTIAL_SERVICE", "MarkItDownVault
 CREDENTIAL_USERS = {
     "gemini": "gemini-api-key",
     "openai": "openai-api-key",
+    "claude": "claude-api-key",
 }
 PUBLIC_UI_ORIGINS = {
     origin.strip().rstrip("/")
@@ -109,6 +111,8 @@ def environment_api_key(provider: str) -> str | None:
         return os.getenv("OPENAI_API_KEY")
     if provider == "gemini":
         return os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    if provider == "claude":
+        return os.getenv("ANTHROPIC_API_KEY")
     return None
 
 
@@ -212,7 +216,11 @@ def temporary_api_key(provider: str, api_key: str | None) -> Iterator[None]:
     if provider == "none" or not api_key:
         yield
         return
-    env_name = "OPENAI_API_KEY" if provider == "openai" else "GEMINI_API_KEY"
+    env_name = {
+        "openai": "OPENAI_API_KEY",
+        "gemini": "GEMINI_API_KEY",
+        "claude": "ANTHROPIC_API_KEY",
+    }[provider]
     previous = os.environ.get(env_name)
     os.environ[env_name] = api_key
     try:
@@ -352,6 +360,7 @@ def status() -> dict[str, Any]:
         document_count = db.execute("SELECT COUNT(*) FROM documents").fetchone()[0]
     gemini_key = provider_key_status("gemini")
     openai_key = provider_key_status("openai")
+    claude_key = provider_key_status("claude")
     return {
         "ready": True,
         "vault": str(vault.root),
@@ -369,6 +378,10 @@ def status() -> dict[str, Any]:
             "openai": {
                 **openai_key,
                 "model": os.getenv("MARKITDOWN_OPENAI_MODEL", DEFAULT_OPENAI_MODEL),
+            },
+            "claude": {
+                **claude_key,
+                "model": os.getenv("MARKITDOWN_CLAUDE_MODEL", DEFAULT_CLAUDE_MODEL),
             },
         },
     }
@@ -489,7 +502,7 @@ async def convert(
     force: bool = Form(default=False),
     allow_network_transcription: bool = Form(default=False),
 ) -> dict[str, Any]:
-    if provider not in {"none", "gemini", "openai"}:
+    if provider not in {"none", "gemini", "openai", "claude"}:
         raise api_error(400, "지원하지 않는 AI 제공자입니다.")
     if engine not in {"builtin", "docintel", "cu"}:
         raise api_error(400, "지원하지 않는 변환 엔진입니다.")

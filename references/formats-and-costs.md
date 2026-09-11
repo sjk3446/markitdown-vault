@@ -6,7 +6,7 @@ Microsoft MarkItDown documents these source categories: PDF; PowerPoint; Word; E
 
 Install the `[all]` extra to enable every official optional converter. Third-party formats require an installed MarkItDown plugin and `--plugins`.
 
-Ordinary document conversion runs locally and makes no OpenAI or Gemini API request. Remote URLs require `--allow-remote`. Built-in audio transcription uses the Google speech-recognition service and therefore requires `--allow-network-transcription`; this service is separate from the selected Gemini API account.
+Ordinary document conversion runs locally and makes no OpenAI, Gemini, or Claude API request. Remote URLs require `--allow-remote`. Built-in audio transcription uses the Google speech-recognition service and therefore requires `--allow-network-transcription`; this service is separate from the selected Gemini API account.
 
 ## LLM enhancement
 
@@ -17,8 +17,9 @@ MarkItDown accepts an OpenAI-compatible client for image descriptions. The offic
 | `--provider none` | none | none | Default text/table extraction |
 | `--provider openai` | `OPENAI_API_KEY` | OpenAI API account | Image descriptions or LLM OCR |
 | `--provider gemini` | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | Gemini Developer API project | Image descriptions or LLM OCR through Google's OpenAI-compatible endpoint |
+| `--provider claude` | `ANTHROPIC_API_KEY` | Anthropic Console/API account | Image descriptions or LLM OCR through Anthropic's OpenAI SDK compatibility endpoint |
 
-Provider selection affects optional LLM calls made by MarkItDown; it does not move the whole document conversion into GPT or Gemini. `--ocr` requires `openai` or `gemini`.
+Provider selection affects optional LLM calls made by MarkItDown; it does not move the whole document conversion into GPT, Gemini, or Claude. `--ocr` requires `openai`, `gemini`, or `claude`.
 
 Google AI Pro is a consumer subscription and does not itself guarantee paid Gemini Developer API quota or credits. The API key's Google Cloud/AI Studio project controls quota and billing.
 
@@ -39,5 +40,6 @@ The wrapper defaults are intentionally overridable because model availability ch
 
 - OpenAI: `MARKITDOWN_OPENAI_MODEL`, otherwise `gpt-4o-mini`
 - Gemini: `MARKITDOWN_GEMINI_MODEL`, otherwise `gemini-2.5-flash`
+- Claude: `MARKITDOWN_CLAUDE_MODEL`, otherwise `claude-sonnet-5`
 
 Use `--model` for a one-off choice.

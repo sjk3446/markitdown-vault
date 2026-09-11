@@ -4,10 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' http://127.0.0.1:8787; img-src 'self' data:; object-src 'none'; base-uri 'none'">
-  <meta name="description" content="Microsoft MarkItDown으로 문서를 로컬에서 Markdown으로 변환하고 카테고리별로 관리합니다.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; worker-src 'self' blob:; style-src 'self'; connect-src 'self' http://127.0.0.1:8787; img-src 'self' data: blob:; object-src 'none'; base-uri 'none'">
+  <meta name="theme-color" content="#111b2e">
+  <meta name="description" content="모바일과 PC에서 문서를 기기 내부에서 Markdown으로 변환하고 카테고리별로 보관합니다.">
   <title>MarkItDown Vault</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./static/styles.css">
+  <script src="./static/vendor/fflate.min.js" defer></script>
+  <script src="./static/vendor/pdf.min.js" defer></script>
+  <script src="./static/vendor/xlsx.full.min.js" defer></script>
+  <script src="./static/browser-vault.js" defer></script>
   <script src="./static/app.js" defer></script>
 </head>
 <body>
@@ -56,24 +63,36 @@
           <div class="companion-copy">
             <span class="companion-icon" aria-hidden="true">⌁</span>
             <div>
-              <strong>로컬 동반 프로그램을 연결하세요</strong>
-              <p>파일과 API 키를 이 컴퓨터 밖으로 보내지 않기 위해 변환 엔진은 PC에서 실행됩니다.</p>
-              <ol><li>설치 파일을 받고 압축을 풉니다.</li><li><b>Install-Windows.cmd</b>를 더블클릭합니다.</li></ol>
+              <strong>모바일 로컬 모드 사용 중</strong>
+              <p>선택한 파일과 변환된 Markdown은 서버로 전송하지 않고 이 브라우저 안에만 저장됩니다.</p>
+              <ol><li>PDF·Word·PowerPoint·Excel·EPUB·ZIP·텍스트 지원</li><li>OCR·AI·URL·오디오는 Windows 전체 모드에서 지원</li></ol>
             </div>
           </div>
           <div class="companion-actions">
-            <a class="primary-small" href="https://github.com/sjk3446/markitdown-vault/archive/refs/heads/main.zip">Windows용 받기</a>
-            <button class="secondary-button" id="retry-connection" type="button">다시 연결</button>
+            <a class="primary-small" href="https://github.com/sjk3446/markitdown-vault/archive/refs/heads/main.zip">Windows 전체 모드</a>
+            <button class="secondary-button" id="retry-connection" type="button">PC 엔진 연결</button>
           </div>
         </section>
 
         <section class="view active" id="view-convert" aria-labelledby="view-title">
+          <section class="privacy-guarantee" aria-label="로컬 저장 및 처리 안내">
+            <span class="privacy-lock" aria-hidden="true">▣</span>
+            <div>
+              <strong>원본 파일과 생성된 Markdown은 외부 서버에 저장되지 않습니다</strong>
+              <p><b>LOCAL</b> 선택 시 변환·분류·검색·보관의 모든 동작이 이 기기 안에서만 처리됩니다. Gemini·OpenAI·Claude·Azure를 직접 선택한 경우에만 필요한 내용이 해당 API로 전송되며, 이 서비스의 서버에는 저장되지 않습니다.</p>
+            </div>
+            <span class="local-only-seal">LOCAL · 외부 전송 0</span>
+          </section>
           <div class="section-intro">
             <div>
               <h2>문서를 Markdown으로</h2>
               <p>파일을 올리고 저장할 카테고리와 변환 방식을 선택하세요.</p>
             </div>
-            <span class="privacy-note">파일은 외부 서버에 저장되지 않습니다</span>
+            <a class="powered-mark" href="https://github.com/microsoft/markitdown" target="_blank" rel="noopener noreferrer" aria-label="Powered by Microsoft MarkItDown">
+              <span>Powered by</span>
+              <img src="./static/microsoft-logo.png" alt="Microsoft">
+              <b>MarkItDown</b>
+            </a>
           </div>
 
           <form id="convert-form">
@@ -87,7 +106,7 @@
                   <label class="dropzone" id="dropzone" for="file-input">
                     <span class="drop-icon" aria-hidden="true">⇧</span>
                     <strong>파일을 놓거나 클릭해서 선택</strong>
-                    <span>PDF · PPTX · DOCX · XLSX · 이미지 · 오디오 · ZIP 외</span>
+                    <span>PDF · PPTX · DOCX · XLS/XLSX · HTML · EPUB · ZIP 외</span>
                     <input id="file-input" name="files" type="file" multiple>
                   </label>
                   <div class="file-list" id="file-list" aria-live="polite"></div>
@@ -130,6 +149,12 @@
                       <input type="radio" name="provider" value="openai">
                       <span class="provider-top"><b>OPENAI</b><em id="openai-key-state">키 입력</em></span>
                       <strong>OpenAI</strong>
+                      <small>이미지 설명·OCR 보강</small>
+                    </label>
+                    <label class="provider-card">
+                      <input type="radio" name="provider" value="claude">
+                      <span class="provider-top"><b>CLAUDE</b><em id="claude-key-state">키 입력</em></span>
+                      <strong>Anthropic Claude</strong>
                       <small>이미지 설명·OCR 보강</small>
                     </label>
                   </div>
@@ -179,6 +204,10 @@
           <section class="queue-section" id="live-job-section" hidden>
             <div class="section-heading"><h2>현재 작업</h2><span id="live-job-label"></span></div>
             <div id="live-job"></div>
+            <div class="library-sync" id="library-sync" hidden>
+              <span class="library-sync-bar"><i></i></span>
+              <strong>변환 완료 · 문서함에 안전하게 저장하는 중…</strong>
+            </div>
           </section>
         </section>
 

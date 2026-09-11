@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="MarkItDown Vault">
+  <rect width="512" height="512" rx="112" fill="#111b2e"/>
+  <rect x="72" y="72" width="368" height="368" rx="84" fill="#275ee7"/>
+  <path d="M142 164h64l50 80 50-80h64v184h-58V249l-56 84-56-84v99h-58V164z" fill="#fff"/>
+  <path d="m256 116 45 50h-27v62h-36v-62h-27l45-50z" fill="#9cc1ff" transform="rotate(180 256 172)"/>
+</svg>

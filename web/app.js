@@ -13,15 +13,16 @@ const state = {
 const COMPANION_ORIGIN = "http://127.0.0.1:8787";
 const runningFromCompanion = ["127.0.0.1", "localhost", "::1"].includes(window.location.hostname)
   && window.location.port === "8787";
-const API_BASE = runningFromCompanion ? "" : COMPANION_ORIGIN;
+let runtimeMode = runningFromCompanion ? "companion" : "detecting";
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 const terminalStates = new Set(["completed", "completed_with_errors", "failed"]);
 const viewNames = { convert: "새 변환", library: "문서함", jobs: "작업 기록" };
+const providerNames = { none: "LOCAL", gemini: "Gemini", openai: "OpenAI", claude: "Claude" };
 
 function apiUrl(path) {
-  return `${API_BASE}${path}`;
+  return `${runningFromCompanion ? "" : COMPANION_ORIGIN}${path}`;
 }
 
 function escapeHtml(value) {
@@ -31,6 +32,7 @@ function escapeHtml(value) {
 }
 
 async function api(path, options = {}) {
+  if (runtimeMode === "browser") return window.browserVault.api(path, options);
   const response = await fetch(apiUrl(path), options);
   const contentType = response.headers.get("content-type") || "";
   const payload = contentType.includes("json") ? await response.json() : await response.text();
@@ -38,6 +40,26 @@ async function api(path, options = {}) {
     throw new Error(payload?.detail || payload || `요청 실패 (${response.status})`);
   }
   return payload;
+}
+
+async function detectRuntime() {
+  if (runningFromCompanion) {
+    runtimeMode = "companion";
+    return;
+  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 1400);
+  try {
+    const response = await fetch(`${COMPANION_ORIGIN}/api/status`, { signal: controller.signal });
+    if (!response.ok) throw new Error("companion unavailable");
+    runtimeMode = "companion";
+  } catch {
+    runtimeMode = "browser";
+    if (!window.browserVault) throw new Error("모바일 변환 모듈을 불러오지 못했습니다. 인터넷 연결을 확인하고 새로고침하세요.");
+    await window.browserVault.ready();
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 let toastTimer;
@@ -83,21 +105,40 @@ function statusLabel(status) {
 
 async function loadStatus() {
   state.status = await api("/api/status");
-  $("#companion-banner").hidden = true;
+  const browserMode = runtimeMode === "browser";
+  $("#companion-banner").hidden = !browserMode;
   $("#vault-path").textContent = state.status.vault;
   $("#nav-doc-count").textContent = state.status.documents;
   const markitdownVersion = state.status.versions.markitdown;
   const indicator = $("#local-status");
   indicator.classList.toggle("ready", Boolean(markitdownVersion));
-  indicator.lastChild.textContent = markitdownVersion ? ` MarkItDown ${markitdownVersion}` : " 엔진 확인 필요";
+  indicator.lastChild.textContent = browserMode ? " 모바일 로컬 모드" : (markitdownVersion ? ` MarkItDown ${markitdownVersion}` : " 엔진 확인 필요");
   const keyLabel = (provider) => {
     if (provider.saved) return "안전 저장됨";
     if (provider.environment) return "환경 변수";
-    return "키 입력";
+    return browserMode ? "PC 전용" : "키 입력";
   };
   $("#gemini-key-state").textContent = keyLabel(state.status.providers.gemini);
   $("#openai-key-state").textContent = keyLabel(state.status.providers.openai);
+  $("#claude-key-state").textContent = keyLabel(state.status.providers.claude);
+  configureRuntimeUi();
   updateProviderPanel();
+}
+
+function configureRuntimeUi() {
+  const browserMode = runtimeMode === "browser";
+  document.documentElement.dataset.runtime = runtimeMode;
+  const localRadio = $("input[name='provider'][value='none']");
+  const aiRadios = $$('input[name="provider"]:not([value="none"])');
+  if (browserMode) localRadio.checked = true;
+  aiRadios.forEach((radio) => { radio.disabled = browserMode; });
+  $$(".provider-card").forEach((card) => card.classList.toggle("unavailable", browserMode && card.querySelector("input").value !== "none"));
+  $("#remote-url").disabled = browserMode;
+  $("#remote-url").placeholder = browserMode ? "URL 변환은 Windows 전체 모드에서 지원" : "https://… (YouTube, 웹 문서)";
+  ["#engine-select", "#ocr-check", "#plugins-check", "#audio-network-check"].forEach((selector) => {
+    $(selector).disabled = browserMode;
+  });
+  $("#retry-connection").textContent = browserMode ? "PC 엔진 연결" : "다시 연결";
 }
 
 async function loadCategories(selected) {
@@ -159,13 +200,15 @@ function updateProviderPanel() {
   const saveButton = $("#save-api-key");
   const deleteButton = $("#delete-api-key");
   const note = $("#credential-note");
-  saveButton.disabled = provider === "none" || providerStatus?.credential_store_available === false;
+  saveButton.disabled = runtimeMode === "browser" || provider === "none" || providerStatus?.credential_store_available === false;
   deleteButton.hidden = !providerStatus?.saved;
   note.classList.toggle("saved", Boolean(providerStatus?.saved || providerStatus?.environment));
   if (providerStatus?.saved) {
     note.textContent = "Windows 자격 증명 관리자에 암호화 저장되어 자동으로 사용됩니다.";
   } else if (providerStatus?.environment) {
     note.textContent = "Windows 환경 변수에 설정된 키를 자동으로 사용합니다.";
+  } else if (runtimeMode === "browser") {
+    note.textContent = "API 키와 AI 보강은 Windows 전체 모드에서 사용할 수 있습니다.";
   } else if (providerStatus?.credential_store_available === false) {
     note.textContent = "Windows 자격 증명 관리자를 사용할 수 없어 이번 변환에만 사용할 수 있습니다.";
   } else {
@@ -191,7 +234,7 @@ async function saveCurrentApiKey() {
     });
     $("#api-key-input").value = "";
     await loadStatus();
-    toast(`${provider === "gemini" ? "Gemini" : "OpenAI"} 키를 Windows 자격 증명 관리자에 저장했습니다.`);
+    toast(`${providerNames[provider]} 키를 Windows 자격 증명 관리자에 저장했습니다.`);
   } catch (error) {
     toast(error.message, true);
   } finally {
@@ -202,7 +245,7 @@ async function saveCurrentApiKey() {
 async function deleteCurrentApiKey() {
   const provider = $("input[name='provider']:checked").value;
   if (provider === "none") return;
-  const label = provider === "gemini" ? "Gemini" : "OpenAI";
+  const label = providerNames[provider] || provider;
   if (!window.confirm(`Windows 자격 증명 관리자에서 ${label} 키를 삭제할까요?`)) return;
   try {
     await api(`/api/credentials/${provider}`, { method: "DELETE" });
@@ -225,7 +268,7 @@ function renderJob(job, compact = false) {
   return `<article class="job-card">
     <div class="job-top"><span class="job-status ${escapeHtml(job.status)}"></span><strong>${statusLabel(job.status)}</strong><time>${formatDate(job.created_at)}</time></div>
     <p class="job-sub">${description}${job.error ? ` — ${escapeHtml(job.error)}` : ""}</p>
-    ${terminalStates.has(job.status) ? "" : `<div class="progress-track"><span style="width:${progress}%"></span></div>`}
+    ${terminalStates.has(job.status) ? "" : `<progress class="progress-track" max="100" value="${progress}" aria-label="변환 진행률 ${progress}%"></progress>`}
     ${results}
   </article>`;
 }
@@ -244,9 +287,17 @@ async function pollJob(jobId) {
       const job = await api(`/api/jobs/${encodeURIComponent(jobId)}`);
       showLiveJob(job);
       if (terminalStates.has(job.status)) {
-        if (job.status === "completed") toast(`${job.total}개 문서 변환이 완료되었습니다.`);
-        else toast(job.error || "일부 문서를 변환하지 못했습니다.", true);
+        const hasResult = (job.results || []).some((item) => item.status !== "failed");
+        if (hasResult) {
+          $("#library-sync").hidden = false;
+          $("#live-job-label").textContent = "문서함 반영 중";
+        }
         await Promise.all([loadStatus(), loadCategories(), loadDocuments(), loadJobs()]);
+        $("#library-sync").hidden = true;
+        showLiveJob(job);
+        if (hasResult) setView("library");
+        if (job.status === "completed") toast(`${job.total}개 문서가 문서함에 저장되었습니다.`);
+        else toast(job.error || "완료된 문서는 문서함에 저장했고, 일부 파일은 변환하지 못했습니다.", true);
         break;
       }
       await new Promise((resolve) => setTimeout(resolve, 1200));
@@ -267,12 +318,12 @@ async function submitConversion(event) {
   }
   const provider = $("input[name='provider']:checked").value;
   if ($("#ocr-check").checked && provider === "none") {
-    toast("OCR 플러그인은 Gemini 또는 OpenAI를 선택해야 합니다.", true);
+    toast("OCR 플러그인은 Gemini, OpenAI 또는 Claude를 선택해야 합니다.", true);
     return;
   }
   const providerConfigured = state.status?.providers?.[provider]?.configured;
   if (provider !== "none" && !providerConfigured && !$("#api-key-input").value.trim()) {
-    toast(`${provider === "gemini" ? "Gemini" : "OpenAI"} API 키를 입력하세요.`, true);
+    toast(`${providerNames[provider] || provider} API 키를 입력하세요.`, true);
     return;
   }
 
@@ -293,7 +344,7 @@ async function submitConversion(event) {
 
   const button = $("#convert-button");
   button.disabled = true;
-  button.querySelector("span").textContent = "업로드 중…";
+  button.querySelector("span").textContent = runtimeMode === "browser" ? "기기에서 준비 중…" : "업로드 중…";
   try {
     const job = await api("/api/convert", { method: "POST", body: form });
     state.files = [];
@@ -359,7 +410,10 @@ async function openDocument(id) {
     $("#preview-category").textContent = document.category;
     $("#preview-content").textContent = document.content;
     $("#preview-truncated").hidden = !document.truncated;
-    $("#download-link").href = apiUrl(`/api/documents/${encodeURIComponent(id)}/download`);
+    $("#download-link").href = runtimeMode === "browser"
+      ? window.browserVault.downloadUrl(document)
+      : apiUrl(`/api/documents/${encodeURIComponent(id)}/download`);
+    $("#download-link").download = `${document.title || "document"}.md`;
     $("#move-category").value = document.category;
     $("#preview-meta").innerHTML = [
       `변환 ${formatDate(document.created_at)}`,
@@ -430,11 +484,14 @@ function bindEvents() {
   });
   $("#retry-connection").addEventListener("click", async () => {
     try {
+      runtimeMode = "detecting";
+      await detectRuntime();
       await Promise.all([loadStatus(), loadCategories(), loadDocuments(), loadJobs()]);
-      toast("로컬 동반 프로그램에 연결했습니다.");
+      toast(runtimeMode === "companion" ? "Windows 전체 모드에 연결했습니다." : "모바일 로컬 모드를 사용합니다.");
     } catch (error) {
+      runtimeMode = "browser";
       $("#companion-banner").hidden = false;
-      toast("로컬 프로그램이 아직 실행되지 않았습니다.", true);
+      toast(error.message, true);
     }
   });
   $("#file-input").addEventListener("change", (event) => addFiles(event.target.files));
@@ -461,6 +518,10 @@ function bindEvents() {
     searchTimer = setTimeout(() => loadDocuments().catch((error) => toast(error.message, true)), 260);
   });
   $("#copy-vault").addEventListener("click", async () => {
+    if (runtimeMode === "browser") {
+      toast("문서는 이 브라우저의 로컬 문서함에 저장됩니다.");
+      return;
+    }
     try {
       await navigator.clipboard.writeText(state.status.vault);
       toast("로컬 저장 경로를 복사했습니다.");
@@ -574,11 +635,15 @@ async function initialize() {
   bindEvents();
   registerWebMcpTools();
   try {
+    await detectRuntime();
     await Promise.all([loadStatus(), loadCategories(), loadDocuments(), loadJobs()]);
   } catch (error) {
     $("#local-status").lastChild.textContent = " 연결 실패";
     $("#companion-banner").hidden = false;
     toast(error.message, true);
+  }
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
   }
 }
 
