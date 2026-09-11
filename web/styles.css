@@ -116,6 +116,18 @@ label > span, .field-label { display: block; color: #505b70; font-size: 11px; fo
 label > span small { color: #929bad; font-weight: 500; margin-left: 4px; }
 
 .provider-grid { min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.base-engine-card { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 14px; border: 1px solid #9bcfbd; border-radius: 11px; background: linear-gradient(120deg, #eefaf6, #f8fcfb); }
+.base-engine-icon { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 9px; background: var(--green); color: #fff; font-size: 18px; font-weight: 800; }
+.base-engine-copy { min-width: 0; display: grid; gap: 3px; }
+.base-engine-copy > span { color: #3c7564; font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.base-engine-copy strong { color: #0d5d47; font-size: 13px; }
+.base-engine-copy small { color: #54766c; font-size: 10px; line-height: 1.4; }
+.base-engine-card > em { padding: 5px 8px; border-radius: 99px; background: #fff; color: var(--green); font-size: 9px; font-style: normal; font-weight: 800; white-space: nowrap; }
+.enhancement-heading { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin: 18px 0 10px; }
+.enhancement-heading > span { min-width: 0; display: grid; gap: 3px; }
+.enhancement-heading strong { font-size: 12px; }
+.enhancement-heading small { color: #7f899c; font-size: 9.5px; line-height: 1.4; }
+.enhancement-heading > em { color: #7e899d; font-size: 9px; font-style: normal; font-weight: 800; white-space: nowrap; }
 .provider-card { min-width: 0; padding: 12px 11px; border: 1px solid var(--line); border-radius: 10px; background: #fff; cursor: pointer; transition: .15s; }
 .provider-card input { position: absolute; opacity: 0; }
 .provider-card:hover { border-color: #b1bfd5; }
@@ -138,12 +150,14 @@ label > span small { color: #929bad; font-weight: 500; margin-left: 4px; }
 .credential-delete { border: 1px solid #e0b8bc; background: #fff8f8; color: var(--danger); }
 .credential-note { display: block; margin-top: 6px; color: #7f899b; font-size: 9.5px; line-height: 1.45; }
 .credential-note.saved { color: var(--green); font-weight: 650; }
+.model-help { display: block; margin-top: 6px; color: #7f899b; font-size: 9.5px; line-height: 1.45; }
 .advanced { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 13px; }
 .advanced summary { color: #59657a; font-size: 11px; font-weight: 750; cursor: pointer; }
 .advanced-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; margin-top: 14px; }
 .advanced-grid > label:first-child { grid-column: 1 / -1; }
 .check-row { display: flex; align-items: flex-start; gap: 8px; }
 .check-row input { margin: 2px 0 0; accent-color: var(--blue); }
+.check-row.unavailable { opacity: .52; cursor: not-allowed; }
 .check-row span { margin: 0; }
 .check-row b { display: block; color: var(--ink); font-size: 11px; }
 .check-row small { display: block; color: #8c95a7; font-size: 9px; margin-top: 2px; }
@@ -155,19 +169,28 @@ label > span small { color: #929bad; font-weight: 500; margin-left: 4px; }
 .section-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; }
 .section-heading span { color: var(--muted); font-size: 11px; }
 .job-card { border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 15px 17px; margin-bottom: 9px; }
-.job-top { display: flex; align-items: center; gap: 10px; }
+.job-top { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; }
 .job-status { width: 8px; height: 8px; border-radius: 50%; background: #9da7b8; }
 .job-status.running { background: var(--blue); animation: pulse 1.2s infinite; }
 .job-status.completed { background: var(--green); }
 .job-status.failed, .job-status.completed_with_errors { background: var(--danger); }
 @keyframes pulse { 50% { box-shadow: 0 0 0 5px rgba(39,94,231,.12); } }
 .job-top strong { font-size: 12px; }
+.job-percent { padding: 3px 7px; border-radius: 99px; background: var(--blue-wash); color: var(--blue-dark); font-size: 9px; font-weight: 800; }
 .job-top time { color: #929bad; font-size: 10px; margin-left: auto; }
+.job-phase { display: flex; align-items: flex-start; gap: 9px; margin: 12px 0 0 18px; color: #30405b; font-size: 11px; font-weight: 700; line-height: 1.45; }
+.job-phase i { flex: 0 0 auto; width: 8px; height: 8px; margin-top: 4px; border-radius: 50%; background: var(--blue); animation: pulse 1.2s infinite; }
+.job-card.completed .job-phase i { background: var(--green); animation: none; }
+.job-card.failed .job-phase i,
+.job-card.completed_with_errors .job-phase i { background: var(--danger); animation: none; }
 .job-sub { color: var(--muted); font-size: 10px; margin: 6px 0 0 18px; }
 .progress-track { display: block; width: calc(100% - 18px); height: 5px; margin: 12px 0 0 18px; border: 0; border-radius: 99px; overflow: hidden; appearance: none; background: #ebeff5; }
 .progress-track::-webkit-progress-bar { background: #ebeff5; border-radius: 99px; }
-.progress-track::-webkit-progress-value { background: var(--blue); border-radius: 99px; transition: width .25s; }
+.progress-track::-webkit-progress-value { background: linear-gradient(90deg, var(--blue), #5f8cff, var(--blue)); background-size: 200% 100%; border-radius: 99px; transition: width .25s; animation: progress-flow 1.2s linear infinite; }
 .progress-track::-moz-progress-bar { background: var(--blue); border-radius: 99px; }
+.job-progress-meta { display: flex; justify-content: space-between; gap: 12px; margin: 6px 0 0 18px; color: #7d889a; font-size: 9px; }
+.job-progress-meta strong { color: var(--blue-dark); }
+@keyframes progress-flow { to { background-position: -200% 0; } }
 .result-line { margin: 9px 0 0 18px; color: #556177; font-size: 10px; }
 .result-line.failed { color: var(--danger); }
 .library-sync { display: grid; gap: 8px; margin-top: 9px; padding: 14px 16px; border: 1px solid #b8c8ec; border-radius: 11px; background: #f5f8ff; color: #29466f; font-size: 11px; }
@@ -210,9 +233,10 @@ dialog::backdrop { background: rgba(10,18,32,.55); backdrop-filter: blur(3px); }
 .preview-card { background: #fff; border-radius: 15px; min-height: 75vh; padding: 23px; box-shadow: var(--shadow); }
 .preview-actions { display: flex; gap: 8px; }
 .preview-meta { display: flex; flex-wrap: wrap; gap: 7px 15px; padding-bottom: 15px; border-bottom: 1px solid var(--line); color: #7a8599; font-size: 10px; }
-.move-row { display: grid; grid-template-columns: auto minmax(180px, 280px) auto; align-items: center; gap: 10px; margin: 14px 0; }
+.move-row { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 10px; margin: 14px 0; }
 .move-row label { color: #6f7a8d; font-size: 10px; font-weight: 700; }
 .move-row select { padding: 7px 9px; font-size: 11px; }
+.move-controls { min-width: 0; display: grid; grid-template-columns: minmax(180px, 280px) auto auto; align-items: center; justify-content: start; gap: 8px; }
 #preview-content { min-height: 50vh; max-height: calc(100vh - 290px); overflow: auto; margin: 0; padding: 22px; border: 1px solid #e2e6ed; border-radius: 10px; background: #fbfaf7; color: #2d3645; font: 12px/1.75 Consolas, "Noto Sans Mono CJK KR", monospace; white-space: pre-wrap; word-break: break-word; }
 .preview-truncated { color: var(--amber); font-size: 10px; }
 .toast { position: fixed; right: 25px; bottom: 24px; z-index: 20; max-width: min(410px, calc(100vw - 40px)); padding: 11px 15px; border-radius: 9px; background: var(--navy); color: #fff; box-shadow: var(--shadow); font-size: 11px; opacity: 0; transform: translateY(9px); pointer-events: none; transition: .18s; }
@@ -252,15 +276,16 @@ dialog::backdrop { background: rgba(10,18,32,.55); backdrop-filter: blur(3px); }
   .privacy-guarantee p { font-size: 11px; }
   .local-only-seal { grid-column: 1 / -1; justify-self: stretch; text-align: center; }
   .provider-grid { grid-template-columns: 1fr; }
-  .provider-card { display: grid; grid-template-columns: 1fr 1fr; }
+  .provider-card { display: grid; grid-template-columns: 1fr; }
   .provider-top { grid-column: 1 / -1; margin-bottom: 8px; }
   .form-grid.two, .advanced-grid, .library-toolbar { grid-template-columns: 1fr; }
   .document-row { grid-template-columns: minmax(0,1fr) auto; }
   .document-row > :nth-child(2), .document-row > :nth-child(3), .document-row > :nth-child(4) { display: none; }
   .preview-dialog { width: calc(100vw - 18px); max-height: calc(100vh - 18px); }
   .preview-card { padding: 16px; }
-  .move-row { grid-template-columns: 1fr auto; }
-  .move-row label { grid-column: 1 / -1; }
+  .move-row { grid-template-columns: 1fr; }
+  .move-controls { grid-template-columns: minmax(0, 1fr) auto; width: 100%; }
+  .move-controls select { grid-column: 1 / -1; }
 }
 
 /* Content typography is intentionally 150%; the LNB/sidebar keeps its compact scale. */
@@ -293,6 +318,14 @@ dialog::backdrop { background: rgba(10,18,32,.55); backdrop-filter: blur(3px); }
 .main-column .provider-top em { font-size: 13.5px; }
 .main-column .provider-card strong { font-size: 18px; }
 .main-column .provider-card small { font-size: 14.25px; }
+.main-column .base-engine-copy > span,
+.main-column .base-engine-card > em,
+.main-column .enhancement-heading > em { font-size: 13.5px; }
+.main-column .base-engine-copy strong { font-size: 19.5px; }
+.main-column .base-engine-copy small,
+.main-column .enhancement-heading small,
+.main-column .model-help { font-size: 14.25px; }
+.main-column .enhancement-heading strong { font-size: 18px; }
 .main-column .credential-field > label { font-size: 16.5px; }
 .main-column .credential-save,
 .main-column .credential-delete { font-size: 15px; }
@@ -304,6 +337,9 @@ dialog::backdrop { background: rgba(10,18,32,.55); backdrop-filter: blur(3px); }
 .main-column .section-heading span { font-size: 16.5px; }
 .main-column .job-top strong { font-size: 18px; }
 .main-column .job-top time { font-size: 15px; }
+.main-column .job-percent,
+.main-column .job-progress-meta { font-size: 13.5px; }
+.main-column .job-phase { font-size: 16.5px; }
 .main-column .job-sub,
 .main-column .result-line { font-size: 15px; line-height: 1.5; }
 .main-column .library-sync { font-size: 16.5px; }

@@ -200,7 +200,8 @@ def public_job(job: dict[str, Any]) -> dict[str, Any]:
         key: job.get(key)
         for key in (
             "id", "status", "created_at", "finished_at", "total", "completed",
-            "current", "category", "provider", "engine", "results", "error",
+            "current", "phase", "progress_percent", "file_index",
+            "category", "provider", "engine", "results", "error",
         )
     }
 
@@ -259,7 +260,12 @@ def run_conversion(
     api_key: str | None,
     upload_root: Path,
 ) -> None:
-    update_job(job_id, status="running")
+    update_job(
+        job_id,
+        status="running",
+        phase="변환 엔진과 로컬 저장소를 준비하고 있습니다.",
+        progress_percent=1,
+    )
     args = conversion_args(config)
     results: list[dict[str, Any]] = []
     try:
@@ -269,28 +275,49 @@ def run_conversion(
         with provider_lock, temporary_api_key(config["provider"], effective_key):
             converter, resolved_model = build_converter(args)
             for index, source in enumerate(sources, start=1):
-                update_job(job_id, current=source_label(source))
+                label = source_label(source)
+
+                def report_progress(message: str, file_percent: int) -> None:
+                    overall = round(((index - 1) + (file_percent / 100)) / len(sources) * 100)
+                    update_job(
+                        job_id,
+                        current=label,
+                        phase=message,
+                        progress_percent=min(overall, 99),
+                        file_index=index,
+                    )
+
+                report_progress("현재 파일의 변환을 시작하고 있습니다.", 2)
                 try:
                     result = convert_one(
-                        vault, converter, source, args, resolved_model, len(sources) == 1
+                        vault, converter, source, args, resolved_model, len(sources) == 1,
+                        progress_callback=report_progress,
                     )
-                    result["source_name"] = source_label(source)
+                    result["source_name"] = label
                     results.append(result)
                 except Exception as exc:  # keep a multi-file batch moving
                     results.append(
                         {
                             "status": "failed",
-                            "source_name": source_label(source),
+                            "source_name": label,
                             "error": str(exc),
                         }
                     )
-                update_job(job_id, completed=index, results=results.copy())
+                update_job(
+                    job_id,
+                    completed=index,
+                    progress_percent=round(index / len(sources) * 100),
+                    phase=f"{index}번째 파일 처리를 마쳤습니다.",
+                    results=results.copy(),
+                )
         failures = sum(item.get("status") == "failed" for item in results)
         final_status = "completed" if failures == 0 else "completed_with_errors"
         update_job(
             job_id,
             status=final_status,
             current=None,
+            phase="변환 결과를 로컬 문서함에 모두 반영했습니다.",
+            progress_percent=100,
             finished_at=utc_now(),
             results=results,
         )
@@ -299,6 +326,7 @@ def run_conversion(
             job_id,
             status="failed",
             current=None,
+            phase="변환을 완료하지 못했습니다. 아래 안내를 확인해 주세요.",
             finished_at=utc_now(),
             error=str(exc),
             results=results,
@@ -558,6 +586,9 @@ async def convert(
         "total": len(sources),
         "completed": 0,
         "current": None,
+        "phase": "변환 작업을 기다리고 있습니다.",
+        "progress_percent": 0,
+        "file_index": 0,
         "category": normalized_category,
         "provider": provider,
         "engine": engine,

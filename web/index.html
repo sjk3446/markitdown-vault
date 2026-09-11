@@ -129,39 +129,54 @@
               <div class="stack">
                 <section class="panel">
                   <div class="panel-heading">
-                    <div><span class="step">03</span><h3>변환 방식</h3></div>
-                    <span class="meta-label">작업별 선택</span>
+                    <div><span class="step">03</span><h3>변환 설정</h3></div>
+                    <span class="meta-label">MarkItDown 항상 사용</span>
                   </div>
-                  <div class="provider-grid" role="radiogroup" aria-label="변환 방식">
+
+                  <div class="base-engine-card" aria-label="기본 변환 엔진 Microsoft MarkItDown, 항상 사용">
+                    <span class="base-engine-icon" aria-hidden="true">✓</span>
+                    <span class="base-engine-copy">
+                      <span>기본 변환 엔진 · 항상 사용</span>
+                      <strong>Microsoft MarkItDown</strong>
+                      <small>문서 구조·텍스트·표를 로컬에서 추출합니다.</small>
+                    </span>
+                    <em>크레딧 0</em>
+                  </div>
+
+                  <div class="enhancement-heading">
+                    <span><strong>AI 이미지·OCR 보강</strong><small>필요한 경우에만 외부 AI를 추가로 사용합니다.</small></span>
+                    <em>선택 사항</em>
+                  </div>
+                  <div class="provider-grid" role="radiogroup" aria-label="AI 이미지 및 OCR 보강 제공자">
                     <label class="provider-card selected">
                       <input type="radio" name="provider" value="none" checked>
-                      <span class="provider-top"><b>LOCAL</b><em>크레딧 0</em></span>
-                      <strong>MarkItDown 기본</strong>
-                      <small>빠른 문서 구조 추출</small>
+                      <span class="provider-top"><b>AI OFF</b><em>크레딧 0</em></span>
+                      <strong>AI 보강 안 함</strong>
+                      <small>MarkItDown만 사용</small>
                     </label>
                     <label class="provider-card">
                       <input type="radio" name="provider" value="gemini">
                       <span class="provider-top"><b>GEMINI</b><em id="gemini-key-state">키 입력</em></span>
-                      <strong>Google Gemini</strong>
+                      <strong>MarkItDown + Gemini</strong>
                       <small>이미지 설명·OCR 보강</small>
                     </label>
                     <label class="provider-card">
                       <input type="radio" name="provider" value="openai">
                       <span class="provider-top"><b>OPENAI</b><em id="openai-key-state">키 입력</em></span>
-                      <strong>OpenAI</strong>
+                      <strong>MarkItDown + OpenAI</strong>
                       <small>이미지 설명·OCR 보강</small>
                     </label>
                     <label class="provider-card">
                       <input type="radio" name="provider" value="claude">
                       <span class="provider-top"><b>CLAUDE</b><em id="claude-key-state">키 입력</em></span>
-                      <strong>Anthropic Claude</strong>
+                      <strong>MarkItDown + Claude</strong>
                       <small>이미지 설명·OCR 보강</small>
                     </label>
                   </div>
 
                   <div id="ai-settings" class="ai-settings" hidden>
                     <div class="form-grid two">
-                      <label><span>모델</span><input id="model-input" type="text" placeholder="기본 모델 사용"></label>
+                      <label><span>AI 모델</span><select id="model-input" aria-describedby="model-help"></select><small class="model-help" id="model-help">선택한 제공자의 API 모델입니다.</small></label>
                       <div class="credential-field">
                         <label for="api-key-input">API 키 <small>입력 후 안전하게 저장 가능</small></label>
                         <div class="credential-input-row">
@@ -185,7 +200,7 @@
                           <option value="cu">Azure Content Understanding</option>
                         </select>
                       </label>
-                      <label class="check-row"><input id="ocr-check" type="checkbox"><span><b>OCR 플러그인</b><small>스캔 PDF·이미지 문자 인식</small></span></label>
+                      <label class="check-row" id="ocr-option"><input id="ocr-check" type="checkbox"><span><b>AI OCR 보강</b><small>외부 AI 선택 시 스캔 PDF·이미지 문자 인식</small></span></label>
                       <label class="check-row"><input id="plugins-check" type="checkbox"><span><b>플러그인 활성화</b><small>설치된 확장 변환기 사용</small></span></label>
                       <label class="check-row"><input id="copy-source-check" type="checkbox" checked><span><b>원본도 보관</b><small>로컬 문서함 sources 폴더</small></span></label>
                       <label class="check-row"><input id="audio-network-check" type="checkbox"><span><b>오디오 전송 허용</b><small>음성 인식 서비스 사용 시 필요</small></span></label>
@@ -255,7 +270,14 @@
         <div class="preview-actions"><a class="secondary-button" id="download-link" href="#">MD 다운로드</a><button class="icon-button" id="close-preview" type="button" aria-label="닫기">×</button></div>
       </div>
       <div class="preview-meta" id="preview-meta"></div>
-      <div class="move-row"><label for="move-category">카테고리 이동</label><select id="move-category"></select><button class="text-button" id="move-document" type="button">이동</button></div>
+      <div class="move-row">
+        <label for="move-category">카테고리 이동</label>
+        <div class="move-controls">
+          <select id="move-category"></select>
+          <button class="secondary-button" id="open-move-category-dialog" type="button">＋ 새 카테고리</button>
+          <button class="primary-small" id="move-document" type="button">이동</button>
+        </div>
+      </div>
       <pre id="preview-content"></pre>
       <p class="preview-truncated" id="preview-truncated" hidden>미리보기는 200,000자까지만 표시됩니다. 전체 내용은 MD 파일을 내려받아 확인하세요.</p>
     </div>

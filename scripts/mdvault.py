@@ -16,7 +16,7 @@ import sys
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 from urllib.parse import urlparse
 
 
@@ -488,7 +488,13 @@ def convert_one(
     args: argparse.Namespace,
     model: str | None,
     only_source: bool,
+    progress_callback: Callable[[str, int], None] | None = None,
 ) -> dict[str, Any]:
+    def report(message: str, percent: int) -> None:
+        if progress_callback is not None:
+            progress_callback(message, percent)
+
+    report("원본 파일과 변환 설정을 확인하고 있습니다.", 8)
     category = normalize_category(args.category)
     remote = is_url(source)
     if remote and not args.allow_remote:
@@ -518,11 +524,19 @@ def convert_one(
             source_hash, category, args.provider, model, args.engine
         )
         if duplicate and Path(duplicate["md_path"]).exists():
+            report("기존 변환 결과를 확인했습니다.", 100)
             return {
                 "status": "existing", "id": duplicate["id"],
                 "title": duplicate["title"], "path": duplicate["md_path"],
             }
+    if args.provider == "none":
+        report("MarkItDown이 문서 구조·텍스트·표를 분석하고 있습니다.", 32)
+    elif args.ocr:
+        report(f"MarkItDown 분석과 {args.provider.upper()} 이미지·OCR 보강을 진행하고 있습니다.", 32)
+    else:
+        report(f"MarkItDown 분석과 {args.provider.upper()} 이미지 설명 보강을 진행하고 있습니다.", 32)
     result = converter.convert(source) if remote else converter.convert_local(source)
+    report("변환된 Markdown의 제목과 구조를 정리하고 있습니다.", 74)
     body = result.markdown
     result_title = getattr(result, "title", None)
     title = args.title if args.title and only_source else (result_title or base_title)
@@ -535,6 +549,7 @@ def convert_one(
     destination = vault.category_path(category) / f"{slugify(title)}--{doc_id[:8]}.md"
     source_copy: str | None = None
     if args.copy_source and not remote:
+        report("원본 파일을 이 기기의 로컬 문서함에 보관하고 있습니다.", 84)
         original = Path(source)
         copied = vault.source_root / f"{doc_id}--{clean_segment(original.name)}"
         shutil.copy2(original, copied)
@@ -553,10 +568,13 @@ def convert_one(
         "llm_model": model,
         "source_copy": source_copy,
     }
+    report("Markdown 파일을 이 기기의 로컬 문서함에 저장하고 있습니다.", 92)
     temp = destination.with_suffix(".md.tmp")
     temp.write_text(build_document(metadata, body), encoding="utf-8")
     temp.replace(destination)
+    report("문서함 검색 색인을 업데이트하고 있습니다.", 97)
     vault.upsert(metadata, body, destination.resolve())
+    report("변환과 로컬 저장을 완료했습니다.", 100)
     return {
         "status": "converted", "id": doc_id, "title": title,
         "category": category, "path": str(destination.resolve()),

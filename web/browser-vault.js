@@ -335,10 +335,19 @@
 
   async function runJob(job, files, options) {
     job.status = "running";
-    for (const file of files) {
+    job.phase = "브라우저 로컬 변환을 준비하고 있습니다.";
+    job.progress_percent = 1;
+    for (const [fileOffset, file] of files.entries()) {
       job.current = file.name;
+      job.file_index = fileOffset + 1;
+      job.phase = "이 기기에서 파일 구조와 내용을 분석하고 있습니다.";
+      job.progress_percent = Math.round((fileOffset + 0.18) / files.length * 100);
+      await new Promise((resolve) => setTimeout(resolve, 0));
       try {
         const content = await convertFile(file);
+        job.phase = "변환된 Markdown의 제목과 구조를 정리하고 있습니다.";
+        job.progress_percent = Math.round((fileOffset + 0.76) / files.length * 100);
+        await new Promise((resolve) => setTimeout(resolve, 0));
         const createdAt = new Date().toISOString();
         const id = createdAt.replace(/[-:.TZ]/g, "").slice(0, 14) + "-" + Math.random().toString(36).slice(2, 8);
         const record = {
@@ -356,17 +365,24 @@
           truncated: false,
           source_blob: options.copySource ? file : null,
         };
+        job.phase = "Markdown을 이 브라우저의 로컬 문서함에 저장하고 있습니다.";
+        job.progress_percent = Math.round((fileOffset + 0.92) / files.length * 100);
         await put("documents", record);
         job.results.push({ status: "completed", id, title: record.title, source_name: file.name });
       } catch (error) {
         job.results.push({ status: "failed", source_name: file.name, error: error.message || String(error) });
       }
       job.completed += 1;
+      job.progress_percent = Math.round(job.completed / job.total * 100);
+      job.phase = `${job.completed}번째 파일 처리를 마쳤습니다.`;
     }
     job.current = null;
     const failures = job.results.filter((item) => item.status === "failed");
     job.status = failures.length === job.total ? "failed" : failures.length ? "completed_with_errors" : "completed";
     if (job.status === "failed") job.error = failures[0]?.error || "변환하지 못했습니다.";
+    job.phase = job.status === "failed"
+      ? "변환을 완료하지 못했습니다. 아래 안내를 확인해 주세요."
+      : "변환 결과를 로컬 문서함에 모두 반영했습니다.";
   }
 
   async function browserApi(path, options) {
@@ -449,7 +465,7 @@
       await put("categories", { category });
       const createdAt = new Date().toISOString();
       const id = "browser-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7);
-      const job = { id, status: "queued", category, provider: "none", total: files.length, completed: 0, current: null, created_at: createdAt, results: [], error: null };
+      const job = { id, status: "queued", category, provider: "none", total: files.length, completed: 0, current: null, phase: "변환 작업을 기다리고 있습니다.", progress_percent: 0, file_index: 0, created_at: createdAt, results: [], error: null };
       jobs.set(id, job);
       setTimeout(() => runJob(job, files, { category, copySource: form.get("copy_source") === "true" }), 0);
       return publicJob(job);
