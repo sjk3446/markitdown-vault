@@ -51,6 +51,8 @@ button { cursor: pointer; }
 .topbar h1 { margin: 2px 0 0; font-size: 24px; letter-spacing: -.04em; }
 .eyebrow { margin: 0; color: #8791a5; font-size: 9px; font-weight: 800; letter-spacing: .18em; }
 .status-cluster { display: flex; align-items: center; gap: 9px; }
+.version-button { padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: #536078; font-size: 10px; font-weight: 800; white-space: nowrap; }
+.version-button:hover { border-color: #aebbd0; background: #f8f9fb; color: var(--ink); }
 .status-pill { display: inline-flex; align-items: center; gap: 7px; padding: 7px 11px; border: 1px solid var(--line); border-radius: 99px; background: #fff; color: var(--muted); font-size: 11px; font-weight: 700; }
 .status-pill i { width: 7px; height: 7px; border-radius: 50%; background: #a4adbc; }
 .status-pill.ready i { background: var(--green); }
@@ -235,6 +237,14 @@ dialog::backdrop { background: rgba(10,18,32,.55); backdrop-filter: blur(3px); }
 .install-steps b { color: var(--ink); font-size: 13px; }
 .install-steps span { margin-top: 3px; color: #657188; font-size: 11px; line-height: 1.45; }
 .install-note { margin: 17px 0 0; padding: 11px 12px; border-radius: 8px; background: var(--blue-wash); color: #425476; font-size: 11px; line-height: 1.5; }
+.version-dialog-card { width: min(680px, calc(100vw - 28px)); }
+.version-intro { margin: 0 0 16px; color: #657188; font-size: 12px; }
+.version-history { display: grid; gap: 0; max-height: min(58vh, 560px); margin: 0; padding: 0; overflow-y: auto; list-style: none; border-top: 1px solid var(--line); }
+.version-history li { padding: 14px 4px; border-bottom: 1px solid var(--line); }
+.version-history li > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.version-history strong { color: var(--ink); font-size: 12px; }
+.version-history span { padding: 4px 7px; border-radius: 99px; background: var(--blue-wash); color: var(--blue); font-size: 9px; font-weight: 800; white-space: nowrap; }
+.version-history p { margin: 6px 0 0; color: #5e6b82; font-size: 11px; line-height: 1.55; }
 .secondary-button, .primary-small { display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; padding: 8px 12px; font-weight: 700; font-size: 11px; text-decoration: none; }
 .secondary-button { border: 1px solid var(--line); background: #fff; color: var(--ink); }
 .primary-small { border: 1px solid var(--blue); background: var(--blue); color: #fff; }
@@ -302,6 +312,7 @@ dialog::backdrop { background: rgba(10,18,32,.55); backdrop-filter: blur(3px); }
 .main-column .topbar h1 { font-size: 36px; }
 .main-column .eyebrow { font-size: 13.5px; }
 .main-column .status-pill { font-size: 16.5px; }
+.main-column .version-button { font-size: 15px; }
 .main-column .companion-copy strong { font-size: 21px; }
 .main-column .companion-copy p { font-size: 18px; }
 .main-column .companion-copy ol { font-size: 16.5px; line-height: 1.5; }
@@ -373,6 +384,10 @@ dialog::backdrop { background: rgba(10,18,32,.55); backdrop-filter: blur(3px); }
 .install-intro { font-size: 18px; }
 .install-steps b { font-size: 19.5px; }
 .install-steps span, .install-note { font-size: 16.5px; }
+.version-intro { font-size: 18px; }
+.version-history strong { font-size: 18px; }
+.version-history span { font-size: 13.5px; }
+.version-history p { font-size: 16.5px; }
 .secondary-button,
 .primary-small { font-size: 16.5px; }
 .preview-meta { font-size: 15px; }

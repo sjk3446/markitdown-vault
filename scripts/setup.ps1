@@ -29,16 +29,12 @@ if ($LASTEXITCODE -ne 0) {
     throw "Could not upgrade pip."
 }
 
-& $PythonExe -m pip install "markitdown[all]" markitdown-ocr docling "pymupdf>=1.24,<1.27" openai imageio-ffmpeg fastapi "uvicorn[standard]" python-multipart keyring
+& $PythonExe -m pip install `
+    "markitdown[pptx,docx,xlsx,xls,pdf,outlook,audio-transcription,youtube-transcription]" `
+    markitdown-ocr "pymupdf>=1.24,<1.27" openai imageio-ffmpeg `
+    fastapi "uvicorn[standard]" python-multipart keyring
 if ($LASTEXITCODE -ne 0) {
-    Write-Warning "The [all] dependency bundle is not compatible with this Python version. Installing every converter extra individually."
-    & $PythonExe -m pip install `
-        "markitdown[pptx,docx,xlsx,xls,pdf,outlook,audio-transcription,az-doc-intel,az-content-understanding]" `
-        markitdown-ocr docling "pymupdf>=1.24,<1.27" openai youtube-transcript-api imageio-ffmpeg `
-        fastapi "uvicorn[standard]" python-multipart keyring
-    if ($LASTEXITCODE -ne 0) {
-        throw "Could not install MarkItDown dependencies. Python 3.10-3.13 may be required on this machine."
-    }
+    throw "Could not install MarkItDown dependencies. Python 3.10-3.13 may be required on this machine."
 }
 
 & $PythonExe (Join-Path $PSScriptRoot "mdvault.py") init

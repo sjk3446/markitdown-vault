@@ -46,15 +46,12 @@ function friendlyErrorMessage(error) {
   if (!raw) return "요청을 처리하는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.";
   if (/[가-힣]/.test(raw)) return raw;
   const messages = [
-    [/Document Intelligence endpoint is not configured/i, "Azure Document Intelligence 연결 정보가 없습니다. 고급 옵션에서 ‘MarkItDown 기본’을 선택하거나 PC 고급 로컬 모드에 Azure 엔드포인트를 설정해 주세요."],
-    [/Content Understanding endpoint is not configured/i, "Azure Content Understanding 연결 정보가 없습니다. 고급 옵션에서 ‘MarkItDown 기본’을 선택하거나 PC 고급 로컬 모드에 Azure 엔드포인트를 설정해 주세요."],
     [/OPENAI_API_KEY is not configured/i, "OpenAI API 키가 없습니다. OpenAI 보강을 선택한 경우 API 키를 입력하거나 저장해 주세요."],
     [/GEMINI_API_KEY or GOOGLE_API_KEY is not configured/i, "Gemini API 키가 없습니다. Gemini 보강을 선택한 경우 API 키를 입력하거나 저장해 주세요."],
     [/ANTHROPIC_API_KEY is not configured/i, "Claude API 키가 없습니다. Claude 보강을 선택한 경우 API 키를 입력하거나 저장해 주세요."],
     [/--ocr requires --provider/i, "AI OCR 보강을 사용하려면 Gemini, OpenAI 또는 Claude 중 하나를 먼저 선택해 주세요."],
     [/markitdown-ocr is not installed/i, "AI OCR 구성 요소가 설치되지 않았습니다. PC 로컬 엔진 설치 파일을 다시 실행해 주세요."],
     [/Microsoft MarkItDown is not installed/i, "Microsoft MarkItDown이 설치되지 않았습니다. PC 로컬 엔진 설치 파일을 다시 실행해 주세요."],
-    [/Docling.*not installed|No module named ['"]docling/i, "Docling 고정밀 로컬 엔진이 설치되지 않았습니다. Windows 설치 파일을 다시 실행해 주세요."],
     [/openai compatibility package is not installed/i, "외부 AI 연결 구성 요소가 설치되지 않았습니다. PC 로컬 엔진 설치 파일을 다시 실행해 주세요."],
     [/Remote input requires --allow-remote/i, "웹 주소 변환 권한이 꺼져 있습니다. 파일을 직접 올리거나 PC 고급 로컬 모드의 URL 변환 설정을 확인해 주세요."],
     [/Built-in audio transcription sends audio/i, "오디오 음성 인식에는 외부 전송 동의가 필요합니다. 고급 옵션에서 ‘오디오 전송 허용’을 선택해 주세요."],
@@ -157,7 +154,7 @@ async function startAndConnectCompanion() {
     runtimeMode = "companion";
     await Promise.all([loadStatus(), loadCategories(), loadDocuments(), loadJobs()]);
     feedback.hidden = true;
-    toast("PC 로컬 엔진에 연결했습니다. Docling과 고급 기능을 사용할 수 있습니다.");
+    toast("PC 로컬 엔진에 연결했습니다. MarkItDown과 AI 보강 기능을 사용할 수 있습니다.");
   } catch (error) {
     runtimeMode = "browser";
     feedback.classList.add("error");
@@ -231,7 +228,7 @@ async function loadStatus() {
   const markitdownVersion = state.status.versions.markitdown;
   const indicator = $("#local-status");
   indicator.classList.toggle("ready", Boolean(markitdownVersion));
-  indicator.lastChild.textContent = browserMode ? " 브라우저 로컬 모드" : (markitdownVersion ? ` PC 로컬 · MarkItDown ${markitdownVersion}` : " 엔진 확인 필요");
+  indicator.lastChild.textContent = browserMode ? " 브라우저 로컬 모드" : (markitdownVersion ? " PC 로컬 · MarkItDown 실행 중" : " 엔진 확인 필요");
   const keyLabel = (provider) => {
     if (provider.saved) return "안전 저장됨";
     if (provider.environment) return "환경 변수";
@@ -254,53 +251,10 @@ function configureRuntimeUi() {
   $$(".provider-card").forEach((card) => card.classList.toggle("unavailable", browserMode && card.querySelector("input").value !== "none"));
   $("#remote-url").disabled = browserMode;
   $("#remote-url").placeholder = browserMode ? "URL 변환은 PC 고급 로컬 모드에서 지원" : "https://… (YouTube, 웹 문서)";
-  ["#engine-select", "#ocr-check", "#plugins-check", "#audio-network-check"].forEach((selector) => {
+  ["#ocr-check", "#plugins-check", "#audio-network-check"].forEach((selector) => {
     $(selector).disabled = browserMode;
   });
   $("#retry-connection").textContent = browserMode ? "PC 엔진 시작·연결" : "연결 다시 확인";
-  updateEngineUi();
-}
-
-function updateEngineUi() {
-  const engine = $("#engine-select").value;
-  const docling = engine === "docling";
-  const aiRadios = $$('.provider-card input[name="provider"]:not([value="none"])');
-  if (docling) {
-    const local = $('input[name="provider"][value="none"]');
-    if (local) local.checked = true;
-    updateProviderPanel();
-  }
-  aiRadios.forEach((radio) => {
-    radio.disabled = runtimeMode === "browser" || docling;
-  });
-  $$(".provider-card").forEach((card) => {
-    const external = card.querySelector("input").value !== "none";
-    card.classList.toggle("unavailable", external && (runtimeMode === "browser" || docling));
-  });
-  const copy = docling ? {
-    label: "Docling 고정밀 로컬",
-    kicker: "고정밀 로컬 변환 엔진 · 선택됨",
-    name: "Docling",
-    description: "레이아웃·표·수식·읽기 순서·OCR을 PC에서 정밀 분석합니다.",
-    help: "API 크레딧과 외부 전송 없이 실행됩니다. MarkItDown보다 오래 걸리고 메모리를 더 사용할 수 있습니다.",
-  } : {
-    label: engine === "builtin" ? "MarkItDown 기본" : "클라우드 변환 엔진",
-    kicker: engine === "builtin" ? "기본 로컬 변환 엔진" : "선택한 외부 변환 엔진",
-    name: engine === "builtin" ? "Microsoft MarkItDown" : $("#engine-select").selectedOptions[0].textContent,
-    description: engine === "builtin"
-      ? "문서 구조·텍스트·표를 빠르게 로컬에서 추출합니다."
-      : "선택한 Azure 서비스로 문서를 전송해 변환합니다.",
-    help: engine === "builtin"
-      ? "일반 문서는 빠른 MarkItDown 기본을 권장합니다."
-      : "Azure 사용량에 따라 비용이 발생하며 별도 연결 설정이 필요합니다.",
-  };
-  $("#active-engine-label").textContent = copy.label;
-  $("#base-engine-kicker").textContent = copy.kicker;
-  $("#base-engine-name").textContent = copy.name;
-  $("#base-engine-description").textContent = copy.description;
-  $("#engine-help").textContent = runtimeMode === "browser" && docling
-    ? "Docling은 PC 고급 로컬 모드에서 사용할 수 있습니다."
-    : copy.help;
 }
 
 async function loadCategories(selected) {
@@ -524,7 +478,7 @@ async function submitConversion(event) {
   form.append("model", $("#model-input").value.trim());
   form.append("api_key", $("#api-key-input").value.trim());
   form.append("llm_prompt", $("#llm-prompt").value.trim());
-  form.append("engine", $("#engine-select").value);
+  form.append("engine", "builtin");
   form.append("ocr", String($("#ocr-check").checked));
   form.append("plugins", String($("#plugins-check").checked));
   form.append("copy_source", String($("#copy-source-check").checked));
@@ -683,6 +637,7 @@ function bindEvents() {
     } catch (error) { toast(error.message, true); }
   });
   $("#open-companion-guide").addEventListener("click", () => $("#companion-dialog").showModal());
+  $("#open-version-history").addEventListener("click", () => $("#version-dialog").showModal());
   $("#retry-connection").addEventListener("click", startAndConnectCompanion);
   $("#file-input").addEventListener("change", (event) => addFiles(event.target.files));
   const dropzone = $("#dropzone");
@@ -694,7 +649,6 @@ function bindEvents() {
   }));
   dropzone.addEventListener("drop", (event) => addFiles(event.dataTransfer.files));
   $$("input[name='provider']").forEach((radio) => radio.addEventListener("change", updateProviderPanel));
-  $("#engine-select").addEventListener("change", updateEngineUi);
   $("#save-api-key").addEventListener("click", saveCurrentApiKey);
   $("#delete-api-key").addEventListener("click", deleteCurrentApiKey);
   $("#convert-form").addEventListener("submit", submitConversion);

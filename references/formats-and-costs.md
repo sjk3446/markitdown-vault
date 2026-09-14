@@ -1,10 +1,10 @@
-# Formats, engines, and credit use
+# Formats and credit use
 
 ## Built-in/local conversion
 
 Microsoft MarkItDown documents these source categories: PDF; PowerPoint; Word; Excel including legacy XLS; images with metadata and OCR; WAV/MP3 audio with metadata and speech transcription; HTML; CSV, JSON, XML and other text formats; ZIP archives; YouTube URLs/transcripts; EPUB; Outlook messages; Jupyter notebooks; RSS/Atom; Wikipedia pages; and Bing search result pages. Exact detection is delegated to the installed MarkItDown version so newly supported formats do not require a wrapper update.
 
-Install the `[all]` extra to enable every official optional converter. Third-party formats require an installed MarkItDown plugin and `--plugins`.
+Install the file-format extras to enable the official optional converters. Third-party formats require an installed MarkItDown plugin and `--plugins`.
 
 Ordinary document conversion runs locally and makes no OpenAI, Gemini, or Claude API request. Remote URLs require `--allow-remote`. Built-in audio transcription uses the Google speech-recognition service and therefore requires `--allow-network-transcription`; this service is separate from the selected Gemini API account.
 
@@ -22,20 +22,6 @@ MarkItDown accepts an OpenAI-compatible client for image descriptions. The offic
 Provider selection affects optional LLM calls made by MarkItDown; it does not move the whole document conversion into GPT, Gemini, or Claude. `--ocr` requires `openai`, `gemini`, or `claude`.
 
 Google AI Pro is a consumer subscription and does not itself guarantee paid Gemini Developer API quota or credits. The API key's Google Cloud/AI Studio project controls quota and billing.
-
-## Docling local engine
-
-- `--engine docling --provider none`: high-accuracy local document conversion with layout, table, formula, reading-order, and OCR analysis.
-- Docling consumes no OpenAI, Gemini, Claude, or Azure API credits and does not upload documents to a conversion server.
-- Initial installation and first model preparation may download dependencies or model assets. Later conversion runs locally and can require substantially more CPU, memory, and time than the built-in MarkItDown engine.
-- Docling and external AI image/OCR enhancement are intentionally mutually exclusive in this app so a local-only selection cannot accidentally use an API.
-
-## Azure engines
-
-- `--engine docintel`: Azure Document Intelligence layout extraction. Requires `MARKITDOWN_DOCINTEL_ENDPOINT` or `--docintel-endpoint`, plus Azure credentials supported by MarkItDown.
-- `--engine cu`: Azure Content Understanding for higher-quality multimodal conversion, structured YAML fields, custom analyzers, audio, and video. Requires `MARKITDOWN_CU_ENDPOINT` or `--cu-endpoint`; `--cu-analyzer-id` is optional.
-
-Both Azure engines may incur Azure charges. They are independent of the LLM provider setting.
 
 ## Windows OCR note
 

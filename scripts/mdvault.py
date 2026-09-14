@@ -16,12 +16,11 @@ import sys
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any, Callable, Iterable
 from urllib.parse import urlparse
 
 
-APP_VERSION = "1.2.0"
+APP_VERSION = "1.6"
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 CLAUDE_BASE_URL = "https://api.anthropic.com/v1/"
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
@@ -39,7 +38,6 @@ FORMAT_GROUPS = {
     "Audio": "WAV and MP3 metadata/transcription",
     "Archives": "ZIP (iterates through contents)",
     "Remote": "YouTube URLs/transcripts (explicit remote access required)",
-    "Azure Content Understanding": "documents, images, audio, and video supported by Azure CU",
 }
 
 
@@ -432,41 +430,6 @@ def build_converter(args: argparse.Namespace) -> tuple[Any, str | None]:
         AudioSegment.converter = imageio_ffmpeg.get_ffmpeg_exe()
     except ImportError:
         pass
-    if args.engine == "docling":
-        if args.provider != "none":
-            raise UserError(
-                "Docling 고정밀 로컬 엔진은 외부 AI 보강과 동시에 사용할 수 없습니다. "
-                "AI 보강 안 함을 선택해 주세요."
-            )
-        try:
-            from docling.document_converter import DocumentConverter
-        except ImportError as exc:
-            raise UserError(
-                "Docling 고정밀 로컬 엔진이 설치되지 않았습니다. "
-                "Windows 설치 파일을 다시 실행해 주세요."
-            ) from exc
-
-        class DoclingAdapter:
-            converter_name = f"docling/{distribution_version('docling') or 'unknown'}"
-
-            def __init__(self) -> None:
-                self._converter = DocumentConverter()
-
-            def _convert(self, source: str) -> Any:
-                converted = self._converter.convert(source)
-                return SimpleNamespace(
-                    markdown=converted.document.export_to_markdown(),
-                    title=None,
-                )
-
-            def convert_local(self, source: str) -> Any:
-                return self._convert(source)
-
-            def convert(self, source: str) -> Any:
-                return self._convert(source)
-
-        return DoclingAdapter(), None
-
     client, model = build_llm(args.provider, args.model)
     if args.ocr and args.provider == "none":
         raise UserError("--ocr requires --provider openai, gemini, or claude.")
@@ -479,18 +442,6 @@ def build_converter(args: argparse.Namespace) -> tuple[Any, str | None]:
             llm_model=model,
             llm_prompt=args.llm_prompt,
         )
-    if args.engine == "docintel":
-        endpoint = args.docintel_endpoint or os.getenv("MARKITDOWN_DOCINTEL_ENDPOINT")
-        if not endpoint:
-            raise UserError("Document Intelligence endpoint is not configured.")
-        options["docintel_endpoint"] = endpoint
-    elif args.engine == "cu":
-        endpoint = args.cu_endpoint or os.getenv("MARKITDOWN_CU_ENDPOINT")
-        if not endpoint:
-            raise UserError("Content Understanding endpoint is not configured.")
-        options["cu_endpoint"] = endpoint
-        if args.cu_analyzer_id:
-            options["cu_analyzer_id"] = args.cu_analyzer_id
     return MarkItDown(**options), model
 
 
@@ -565,9 +516,7 @@ def convert_one(
                 "status": "existing", "id": duplicate["id"],
                 "title": duplicate["title"], "path": duplicate["md_path"],
             }
-    if args.engine == "docling":
-        report("Docling이 문서 레이아웃·표·읽기 순서·OCR을 고정밀로 분석하고 있습니다.", 32)
-    elif args.provider == "none":
+    if args.provider == "none":
         report("MarkItDown이 문서 구조·텍스트·표를 분석하고 있습니다.", 32)
     elif args.ocr:
         report(f"MarkItDown 분석과 {args.provider.upper()} 이미지·OCR 보강을 진행하고 있습니다.", 32)
@@ -659,10 +608,7 @@ def add_convert_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--llm-prompt")
     parser.add_argument("--ocr", action="store_true")
     parser.add_argument("--plugins", action="store_true")
-    parser.add_argument("--engine", choices=("builtin", "docling", "docintel", "cu"), default="builtin")
-    parser.add_argument("--docintel-endpoint")
-    parser.add_argument("--cu-endpoint")
-    parser.add_argument("--cu-analyzer-id")
+    parser.set_defaults(engine="builtin")
     parser.add_argument("--title")
     parser.add_argument("--copy-source", action="store_true")
     parser.add_argument("--allow-remote", action="store_true")
@@ -731,8 +677,6 @@ def command_status(vault: Vault) -> None:
             os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         ),
         "claude_key_configured": bool(os.getenv("ANTHROPIC_API_KEY")),
-        "docintel_endpoint_configured": bool(os.getenv("MARKITDOWN_DOCINTEL_ENDPOINT")),
-        "cu_endpoint_configured": bool(os.getenv("MARKITDOWN_CU_ENDPOINT")),
     }
     print(json.dumps(payload, ensure_ascii=False, indent=2))
 

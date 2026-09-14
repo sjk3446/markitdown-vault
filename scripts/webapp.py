@@ -242,9 +242,6 @@ def conversion_args(config: dict[str, Any]) -> argparse.Namespace:
         ocr=config["ocr"],
         plugins=config["plugins"],
         engine=config["engine"],
-        docintel_endpoint=None,
-        cu_endpoint=None,
-        cu_analyzer_id=None,
         allow_remote=True,
         allow_network_transcription=config["allow_network_transcription"],
         copy_source=config["copy_source"],
@@ -273,19 +270,7 @@ def run_conversion(
         if config["provider"] != "none" and not effective_key and not environment_api_key(config["provider"]):
             effective_key = stored_api_key(config["provider"])
         with provider_lock, temporary_api_key(config["provider"], effective_key):
-            if config["engine"] == "docling":
-                update_job(
-                    job_id,
-                    phase="Docling 고정밀 엔진과 로컬 OCR 모델을 PC 메모리에 준비하고 있습니다.",
-                    progress_percent=2,
-                )
             converter, resolved_model = build_converter(args)
-            if config["engine"] == "docling":
-                update_job(
-                    job_id,
-                    phase="Docling 준비를 마쳤습니다. 첫 번째 문서 분석을 시작합니다.",
-                    progress_percent=4,
-                )
             for index, source in enumerate(sources, start=1):
                 label = source_label(source)
 
@@ -408,7 +393,6 @@ def status() -> dict[str, Any]:
         "versions": {
             "markitdown": distribution_version("markitdown"),
             "markitdown_ocr": distribution_version("markitdown-ocr"),
-            "docling": distribution_version("docling"),
         },
         "providers": {
             "local": {"configured": True, "model": None},
@@ -545,8 +529,8 @@ async def convert(
 ) -> dict[str, Any]:
     if provider not in {"none", "gemini", "openai", "claude"}:
         raise api_error(400, "지원하지 않는 AI 제공자입니다.")
-    if engine not in {"builtin", "docling", "docintel", "cu"}:
-        raise api_error(400, "지원하지 않는 변환 엔진입니다.")
+    if engine != "builtin":
+        raise api_error(400, "이 앱은 Microsoft MarkItDown 변환 엔진만 지원합니다.")
     normalized_category = normalize_category(category)
     vault.category_path(normalized_category)
 
@@ -584,7 +568,7 @@ async def convert(
         "provider": provider,
         "model": (model or "").strip() or None,
         "llm_prompt": (llm_prompt or "").strip() or None,
-        "engine": engine,
+        "engine": "builtin",
         "ocr": ocr,
         "plugins": plugins,
         "copy_source": copy_source,
@@ -604,7 +588,7 @@ async def convert(
         "file_index": 0,
         "category": normalized_category,
         "provider": provider,
-        "engine": engine,
+        "engine": "builtin",
         "results": [],
         "error": None,
     }
