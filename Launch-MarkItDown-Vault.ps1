@@ -1,5 +1,7 @@
 [CmdletBinding()]
-param()
+param(
+    [switch] $NoBrowser
+)
 
 $ErrorActionPreference = "Stop"
 $PublicUrl = "https://sjk3446.github.io/markitdown-vault/"
@@ -37,8 +39,9 @@ if (-not $Ready) {
     }
 }
 
-Start-Process $PublicUrl
+if (-not $NoBrowser) {
+    Start-Process $PublicUrl
+}
 if (-not $Ready) {
     throw "The local converter did not start. Check whether port 8787 is already in use."
 }
-

@@ -11,6 +11,7 @@ const state = {
 };
 
 const COMPANION_ORIGIN = "http://127.0.0.1:8787";
+const COMPANION_PROTOCOL = "markitdown-vault://start";
 const runningFromCompanion = ["127.0.0.1", "localhost", "::1"].includes(window.location.hostname)
   && window.location.port === "8787";
 let runtimeMode = runningFromCompanion ? "companion" : "detecting";
@@ -45,22 +46,22 @@ function friendlyErrorMessage(error) {
   if (!raw) return "요청을 처리하는 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.";
   if (/[가-힣]/.test(raw)) return raw;
   const messages = [
-    [/Document Intelligence endpoint is not configured/i, "Azure Document Intelligence 연결 정보가 없습니다. 고급 옵션에서 ‘MarkItDown 기본’을 선택하거나 Windows 전체 모드에 Azure 엔드포인트를 설정해 주세요."],
-    [/Content Understanding endpoint is not configured/i, "Azure Content Understanding 연결 정보가 없습니다. 고급 옵션에서 ‘MarkItDown 기본’을 선택하거나 Windows 전체 모드에 Azure 엔드포인트를 설정해 주세요."],
+    [/Document Intelligence endpoint is not configured/i, "Azure Document Intelligence 연결 정보가 없습니다. 고급 옵션에서 ‘MarkItDown 기본’을 선택하거나 PC 고급 로컬 모드에 Azure 엔드포인트를 설정해 주세요."],
+    [/Content Understanding endpoint is not configured/i, "Azure Content Understanding 연결 정보가 없습니다. 고급 옵션에서 ‘MarkItDown 기본’을 선택하거나 PC 고급 로컬 모드에 Azure 엔드포인트를 설정해 주세요."],
     [/OPENAI_API_KEY is not configured/i, "OpenAI API 키가 없습니다. OpenAI 보강을 선택한 경우 API 키를 입력하거나 저장해 주세요."],
     [/GEMINI_API_KEY or GOOGLE_API_KEY is not configured/i, "Gemini API 키가 없습니다. Gemini 보강을 선택한 경우 API 키를 입력하거나 저장해 주세요."],
     [/ANTHROPIC_API_KEY is not configured/i, "Claude API 키가 없습니다. Claude 보강을 선택한 경우 API 키를 입력하거나 저장해 주세요."],
     [/--ocr requires --provider/i, "AI OCR 보강을 사용하려면 Gemini, OpenAI 또는 Claude 중 하나를 먼저 선택해 주세요."],
-    [/markitdown-ocr is not installed/i, "AI OCR 구성 요소가 설치되지 않았습니다. Windows 전체 모드 설치 파일을 다시 실행해 주세요."],
-    [/Microsoft MarkItDown is not installed/i, "Microsoft MarkItDown이 설치되지 않았습니다. Windows 전체 모드 설치 파일을 다시 실행해 주세요."],
+    [/markitdown-ocr is not installed/i, "AI OCR 구성 요소가 설치되지 않았습니다. PC 로컬 엔진 설치 파일을 다시 실행해 주세요."],
+    [/Microsoft MarkItDown is not installed/i, "Microsoft MarkItDown이 설치되지 않았습니다. PC 로컬 엔진 설치 파일을 다시 실행해 주세요."],
     [/Docling.*not installed|No module named ['"]docling/i, "Docling 고정밀 로컬 엔진이 설치되지 않았습니다. Windows 설치 파일을 다시 실행해 주세요."],
-    [/openai compatibility package is not installed/i, "외부 AI 연결 구성 요소가 설치되지 않았습니다. Windows 전체 모드 설치 파일을 다시 실행해 주세요."],
-    [/Remote input requires --allow-remote/i, "웹 주소 변환 권한이 꺼져 있습니다. 파일을 직접 올리거나 Windows 전체 모드의 URL 변환 설정을 확인해 주세요."],
+    [/openai compatibility package is not installed/i, "외부 AI 연결 구성 요소가 설치되지 않았습니다. PC 로컬 엔진 설치 파일을 다시 실행해 주세요."],
+    [/Remote input requires --allow-remote/i, "웹 주소 변환 권한이 꺼져 있습니다. 파일을 직접 올리거나 PC 고급 로컬 모드의 URL 변환 설정을 확인해 주세요."],
     [/Built-in audio transcription sends audio/i, "오디오 음성 인식에는 외부 전송 동의가 필요합니다. 고급 옵션에서 ‘오디오 전송 허용’을 선택해 주세요."],
     [/Source does not exist/i, "선택한 원본 파일을 찾을 수 없습니다. 파일이 이동되거나 삭제되지 않았는지 확인해 주세요."],
     [/No stored document matches/i, "조건에 맞는 저장 문서를 찾지 못했습니다."],
     [/Ambiguous document/i, "이름이 비슷한 문서가 여러 개입니다. 문서함에서 원하는 문서를 직접 선택해 주세요."],
-    [/Failed to fetch|NetworkError|Load failed/i, "Windows 전체 모드에 연결하지 못했습니다. PC 엔진이 실행 중인지 확인한 뒤 ‘PC 엔진 연결’을 눌러 주세요."],
+    [/Failed to fetch|NetworkError|Load failed/i, "PC 로컬 엔진에 연결하지 못했습니다. 바탕화면의 MarkItDown Vault를 실행한 뒤 ‘PC 엔진 시작·연결’을 눌러 주세요."],
   ];
   const match = messages.find(([pattern]) => pattern.test(raw));
   return match
@@ -89,23 +90,82 @@ async function api(path, options = {}) {
   return payload;
 }
 
+async function probeCompanion(timeoutMs = 1400) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(`${COMPANION_ORIGIN}/api/status`, {
+      signal: controller.signal,
+      cache: "no-store",
+    });
+    return response.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function detectRuntime() {
   if (runningFromCompanion) {
     runtimeMode = "companion";
     return;
   }
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 1400);
-  try {
-    const response = await fetch(`${COMPANION_ORIGIN}/api/status`, { signal: controller.signal });
-    if (!response.ok) throw new Error("companion unavailable");
+  if (await probeCompanion()) {
     runtimeMode = "companion";
-  } catch {
+  } else {
     runtimeMode = "browser";
     if (!window.browserVault) throw new Error("모바일 변환 모듈을 불러오지 못했습니다. 인터넷 연결을 확인하고 새로고침하세요.");
     await window.browserVault.ready();
+  }
+}
+
+const wait = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+async function startAndConnectCompanion() {
+  const button = $("#retry-connection");
+  const feedback = $("#connection-feedback");
+  button.disabled = true;
+  button.textContent = "연결 확인 중…";
+  feedback.hidden = false;
+  feedback.classList.remove("error");
+  feedback.textContent = "이 PC에서 로컬 엔진이 실행 중인지 확인하고 있습니다.";
+  try {
+    let connected = await probeCompanion(1800);
+    if (!connected) {
+      feedback.textContent = "설치된 PC 로컬 엔진의 실행을 요청했습니다. 브라우저 확인창이 뜨면 열기를 선택하세요.";
+      const launcher = document.createElement("a");
+      launcher.href = COMPANION_PROTOCOL;
+      launcher.hidden = true;
+      document.body.appendChild(launcher);
+      launcher.click();
+      launcher.remove();
+      for (let attempt = 0; attempt < 12 && !connected; attempt += 1) {
+        await wait(850);
+        connected = await probeCompanion(900);
+      }
+    }
+    if (!connected) {
+      runtimeMode = "browser";
+      configureRuntimeUi();
+      feedback.classList.add("error");
+      feedback.textContent = "PC 엔진을 찾지 못했습니다. 먼저 설치 ZIP의 압축을 풀고 Install-Windows.cmd를 실행하거나, 바탕화면 바로가기를 실행해 주세요.";
+      $("#companion-dialog").showModal();
+      toast("PC 엔진이 실행되지 않았습니다. 화면의 설치·실행 안내를 확인해 주세요.", true);
+      return;
+    }
+    runtimeMode = "companion";
+    await Promise.all([loadStatus(), loadCategories(), loadDocuments(), loadJobs()]);
+    feedback.hidden = true;
+    toast("PC 로컬 엔진에 연결했습니다. Docling과 고급 기능을 사용할 수 있습니다.");
+  } catch (error) {
+    runtimeMode = "browser";
+    feedback.classList.add("error");
+    feedback.textContent = "연결 확인 중 문제가 발생했습니다. PC 엔진을 실행한 뒤 다시 시도해 주세요.";
+    toast(error.message, true);
   } finally {
-    clearTimeout(timeout);
+    button.disabled = false;
+    button.textContent = runtimeMode === "browser" ? "PC 엔진 시작·연결" : "연결 다시 확인";
   }
 }
 
@@ -171,7 +231,7 @@ async function loadStatus() {
   const markitdownVersion = state.status.versions.markitdown;
   const indicator = $("#local-status");
   indicator.classList.toggle("ready", Boolean(markitdownVersion));
-  indicator.lastChild.textContent = browserMode ? " 모바일 로컬 모드" : (markitdownVersion ? ` MarkItDown ${markitdownVersion}` : " 엔진 확인 필요");
+  indicator.lastChild.textContent = browserMode ? " 브라우저 로컬 모드" : (markitdownVersion ? ` PC 로컬 · MarkItDown ${markitdownVersion}` : " 엔진 확인 필요");
   const keyLabel = (provider) => {
     if (provider.saved) return "안전 저장됨";
     if (provider.environment) return "환경 변수";
@@ -193,11 +253,11 @@ function configureRuntimeUi() {
   aiRadios.forEach((radio) => { radio.disabled = browserMode; });
   $$(".provider-card").forEach((card) => card.classList.toggle("unavailable", browserMode && card.querySelector("input").value !== "none"));
   $("#remote-url").disabled = browserMode;
-  $("#remote-url").placeholder = browserMode ? "URL 변환은 Windows 전체 모드에서 지원" : "https://… (YouTube, 웹 문서)";
+  $("#remote-url").placeholder = browserMode ? "URL 변환은 PC 고급 로컬 모드에서 지원" : "https://… (YouTube, 웹 문서)";
   ["#engine-select", "#ocr-check", "#plugins-check", "#audio-network-check"].forEach((selector) => {
     $(selector).disabled = browserMode;
   });
-  $("#retry-connection").textContent = browserMode ? "PC 엔진 연결" : "다시 연결";
+  $("#retry-connection").textContent = browserMode ? "PC 엔진 시작·연결" : "연결 다시 확인";
   updateEngineUi();
 }
 
@@ -239,7 +299,7 @@ function updateEngineUi() {
   $("#base-engine-name").textContent = copy.name;
   $("#base-engine-description").textContent = copy.description;
   $("#engine-help").textContent = runtimeMode === "browser" && docling
-    ? "Docling은 Windows 전체 모드에서 사용할 수 있습니다."
+    ? "Docling은 PC 고급 로컬 모드에서 사용할 수 있습니다."
     : copy.help;
 }
 
@@ -326,7 +386,7 @@ function updateProviderPanel() {
   } else if (providerStatus?.environment) {
     note.textContent = "Windows 환경 변수에 설정된 키를 자동으로 사용합니다.";
   } else if (runtimeMode === "browser") {
-    note.textContent = "API 키와 AI 보강은 Windows 전체 모드에서 사용할 수 있습니다.";
+    note.textContent = "API 키와 AI 보강은 PC 고급 로컬 모드에서 사용할 수 있습니다.";
   } else if (providerStatus?.credential_store_available === false) {
     note.textContent = "Windows 자격 증명 관리자를 사용할 수 없어 이번 변환에만 사용할 수 있습니다.";
   } else {
@@ -622,18 +682,8 @@ function bindEvents() {
       toast("최신 상태로 갱신했습니다.");
     } catch (error) { toast(error.message, true); }
   });
-  $("#retry-connection").addEventListener("click", async () => {
-    try {
-      runtimeMode = "detecting";
-      await detectRuntime();
-      await Promise.all([loadStatus(), loadCategories(), loadDocuments(), loadJobs()]);
-      toast(runtimeMode === "companion" ? "Windows 전체 모드에 연결했습니다." : "모바일 로컬 모드를 사용합니다.");
-    } catch (error) {
-      runtimeMode = "browser";
-      $("#companion-banner").hidden = false;
-      toast(error.message, true);
-    }
-  });
+  $("#open-companion-guide").addEventListener("click", () => $("#companion-dialog").showModal());
+  $("#retry-connection").addEventListener("click", startAndConnectCompanion);
   $("#file-input").addEventListener("change", (event) => addFiles(event.target.files));
   const dropzone = $("#dropzone");
   ["dragenter", "dragover"].forEach((name) => dropzone.addEventListener(name, (event) => {

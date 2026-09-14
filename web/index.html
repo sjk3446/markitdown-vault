@@ -63,14 +63,15 @@
           <div class="companion-copy">
             <span class="companion-icon" aria-hidden="true">⌁</span>
             <div>
-              <strong>모바일 로컬 모드 사용 중</strong>
-              <p>선택한 파일과 변환된 Markdown은 서버로 전송하지 않고 이 브라우저 안에만 저장됩니다.</p>
-              <ol><li>PDF·Word·PowerPoint·Excel·EPUB·ZIP·텍스트 지원</li><li>OCR·AI·URL·오디오는 Windows 전체 모드에서 지원</li></ol>
+              <strong>브라우저 로컬 모드 사용 중</strong>
+              <p>PC 로컬 엔진이 실행되지 않았습니다. 현재도 기본 변환은 가능하며 파일과 Markdown은 이 브라우저 안에만 저장됩니다.</p>
+              <ol><li>기본 문서 변환은 설치 없이 사용</li><li>Docling·고급 OCR·URL 변환은 PC 로컬 엔진 필요</li></ol>
             </div>
           </div>
           <div class="companion-actions">
-            <a class="primary-small" href="https://github.com/sjk3446/markitdown-vault/archive/refs/heads/main.zip">Windows 전체 모드</a>
-            <button class="secondary-button" id="retry-connection" type="button">PC 엔진 연결</button>
+            <button class="primary-small" id="open-companion-guide" type="button">PC 고급 기능 안내</button>
+            <button class="secondary-button" id="retry-connection" type="button">PC 엔진 시작·연결</button>
+            <p class="connection-feedback" id="connection-feedback" role="status" aria-live="polite" hidden></p>
           </div>
         </section>
 
@@ -255,6 +256,24 @@
       </main>
     </div>
   </div>
+
+  <dialog id="companion-dialog">
+    <form method="dialog" class="dialog-card companion-dialog-card">
+      <div class="dialog-head"><div><p class="eyebrow">PC LOCAL ENGINE</p><h2>PC 고급 로컬 엔진 사용하기</h2></div><button class="icon-button" value="cancel" aria-label="닫기">×</button></div>
+      <p class="install-intro">웹브라우저 보안상 웹사이트가 Windows 프로그램을 직접 설치할 수는 없습니다. 아래 과정은 최초 한 번만 필요합니다.</p>
+      <ol class="install-steps">
+        <li><b>설치 ZIP 다운로드</b><span>압축 파일이 내려받아지는 것이 정상입니다.</span></li>
+        <li><b>압축을 완전히 풀기</b><span>ZIP 안에서 바로 실행하지 마세요.</span></li>
+        <li><b>Install-Windows.cmd 실행</b><span>설치가 끝나면 바탕화면에 MarkItDown Vault 바로가기가 만들어집니다.</span></li>
+        <li><b>이후에는 바로가기 실행</b><span>공개 화면으로 돌아와 ‘PC 엔진 시작·연결’을 누르면 됩니다.</span></li>
+      </ol>
+      <p class="install-note">PC 엔진은 외부 서버가 아니라 내 컴퓨터의 <code>127.0.0.1:8787</code>에서만 실행됩니다.</p>
+      <div class="dialog-actions">
+        <button class="secondary-button" value="cancel">닫기</button>
+        <a class="primary-small" href="https://github.com/sjk3446/markitdown-vault/archive/refs/heads/main.zip">설치 ZIP 다운로드</a>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="category-dialog">
     <form method="dialog" class="dialog-card" id="category-form">

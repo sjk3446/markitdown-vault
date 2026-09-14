@@ -14,14 +14,14 @@ Windows 브라우저 ──► 127.0.0.1 로컬 MarkItDown ──► 사용자\M
 
 - 업로드 원본과 변환된 Markdown은 GitHub 또는 이 서비스의 외부 서버에 저장되지 않습니다.
 - 모바일에서는 변환·분류·검색·보관이 브라우저 안에서 실행되고 IndexedDB에 저장됩니다.
-- Windows 전체 모드에서는 변환기가 사용자 PC의 `127.0.0.1`에서만 실행됩니다.
+- PC 고급 로컬 모드에서는 변환기가 사용자 PC의 `127.0.0.1`에서만 실행됩니다.
 - 저장한 Gemini/OpenAI/Claude 키는 Windows 자격 증명 관리자에 보관됩니다.
 - 기본 LOCAL 변환은 OpenAI/Gemini/Claude 크레딧을 사용하지 않습니다.
 - Docling 고정밀 로컬 엔진도 API 크레딧과 문서 외부 전송 없이 PC에서 실행됩니다. 첫 설치 시 엔진과 모델 구성 요소를 내려받으며, 기본 MarkItDown보다 처리 시간이 길고 메모리를 더 사용할 수 있습니다.
 - Gemini/OpenAI/Claude/Azure를 직접 선택하면 필요한 내용만 해당 제공자의 API로 전송될 수 있습니다.
 - Gemini API 사용량과 Google AI Pro 구독은 별도입니다.
 
-## Windows에서 설치
+## PC 고급 로컬 엔진 설치
 
 1. 저장소의 **Code → Download ZIP**을 선택합니다.
 2. ZIP 파일의 압축을 풉니다.

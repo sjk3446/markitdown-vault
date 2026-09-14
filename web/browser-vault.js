@@ -282,7 +282,7 @@
   }
 
   async function convertFile(file) {
-    if (file.size > MAX_FILE_BYTES) throw new Error("모바일 브라우저에서는 180MB 이하 파일을 사용하세요. 더 큰 파일은 Windows 전체 모드를 이용하세요.");
+    if (file.size > MAX_FILE_BYTES) throw new Error("브라우저 로컬 모드에서는 180MB 이하 파일을 사용하세요. 더 큰 파일은 PC 고급 로컬 모드를 이용하세요.");
     const ext = extension(file.name);
     const bytes = new Uint8Array(await file.arrayBuffer());
     if (ext === "pdf") return convertPdf(bytes, file.name);
@@ -301,12 +301,12 @@
       return "# " + titleFromName(file.name) + "\n\n" + decodeText(bytes).trim();
     }
     if (file.type.startsWith("image/")) {
-      return "# " + titleFromName(file.name) + "\n\n- 형식: " + (file.type || ext.toUpperCase()) + "\n- 크기: " + file.size.toLocaleString("ko-KR") + " bytes\n\n> 이미지 OCR과 설명은 Windows 전체 모드에서 Gemini, OpenAI 또는 Claude를 선택해 사용할 수 있습니다.";
+      return "# " + titleFromName(file.name) + "\n\n- 형식: " + (file.type || ext.toUpperCase()) + "\n- 크기: " + file.size.toLocaleString("ko-KR") + " bytes\n\n> 이미지 OCR과 설명은 PC 고급 로컬 모드에서 Gemini, OpenAI 또는 Claude를 선택해 사용할 수 있습니다.";
     }
     if (file.type.startsWith("audio/")) {
-      return "# " + titleFromName(file.name) + "\n\n- 형식: " + (file.type || ext.toUpperCase()) + "\n- 크기: " + file.size.toLocaleString("ko-KR") + " bytes\n\n> 음성 인식은 Windows 전체 모드에서 사용할 수 있습니다.";
+      return "# " + titleFromName(file.name) + "\n\n- 형식: " + (file.type || ext.toUpperCase()) + "\n- 크기: " + file.size.toLocaleString("ko-KR") + " bytes\n\n> 음성 인식은 PC 고급 로컬 모드에서 사용할 수 있습니다.";
     }
-    throw new Error("모바일 브라우저에서 지원하지 않는 형식입니다. Windows 전체 모드를 이용하세요: ." + (ext || "unknown"));
+    throw new Error("브라우저 로컬 모드에서 지원하지 않는 형식입니다. PC 고급 로컬 모드를 이용하세요: ." + (ext || "unknown"));
   }
 
   function publicDocument(documentRecord, includeContent) {
@@ -457,8 +457,8 @@
     if (url.pathname === "/api/convert" && method === "POST") {
       const form = options.body;
       if (!(form instanceof FormData)) throw new Error("올바른 변환 요청이 아닙니다.");
-      if (String(form.get("remote_url") || "").trim()) throw new Error("모바일 로컬 모드에서는 URL 변환을 지원하지 않습니다. 파일을 직접 선택하세요.");
-      if (String(form.get("provider") || "none") !== "none") throw new Error("모바일 로컬 모드는 API 키나 크레딧을 사용하지 않습니다. LOCAL을 선택하세요.");
+      if (String(form.get("remote_url") || "").trim()) throw new Error("브라우저 로컬 모드에서는 URL 변환을 지원하지 않습니다. 파일을 직접 선택하세요.");
+      if (String(form.get("provider") || "none") !== "none") throw new Error("브라우저 로컬 모드는 API 키나 크레딧을 사용하지 않습니다. LOCAL을 선택하세요.");
       const files = form.getAll("files").filter((item) => item instanceof File);
       if (!files.length) throw new Error("변환할 파일을 선택하세요.");
       const category = normalizeCategory(form.get("category"));
@@ -471,7 +471,7 @@
       return publicJob(job);
     }
 
-    if (url.pathname.startsWith("/api/credentials/")) throw new Error("API 키 저장은 Windows 전체 모드에서만 지원합니다.");
+    if (url.pathname.startsWith("/api/credentials/")) throw new Error("API 키 저장은 PC 고급 로컬 모드에서만 지원합니다.");
     throw new Error("브라우저 로컬 모드에서 지원하지 않는 요청입니다.");
   }
 

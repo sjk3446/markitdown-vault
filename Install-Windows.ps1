@@ -75,6 +75,13 @@ $Shortcut.WorkingDirectory = $InstallRoot
 $Shortcut.Description = "Open MarkItDown Vault"
 $Shortcut.Save()
 
-Write-Host "Installation complete. A desktop shortcut was created."
-& (Join-Path $InstallRoot "Launch-MarkItDown-Vault.ps1")
+$ProtocolRoot = "HKCU:\Software\Classes\markitdown-vault"
+$ProtocolCommand = '"' + "powershell.exe" + '" -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + (Join-Path $InstallRoot "Launch-MarkItDown-Vault.ps1") + '" -NoBrowser'
+New-Item -Path $ProtocolRoot -Force | Out-Null
+Set-Item -Path $ProtocolRoot -Value "URL:MarkItDown Vault Local Engine"
+New-ItemProperty -Path $ProtocolRoot -Name "URL Protocol" -Value "" -PropertyType String -Force | Out-Null
+New-Item -Path (Join-Path $ProtocolRoot "shell\open\command") -Force | Out-Null
+Set-Item -Path (Join-Path $ProtocolRoot "shell\open\command") -Value $ProtocolCommand
 
+Write-Host "Installation complete. A desktop shortcut and browser launch link were created."
+& (Join-Path $InstallRoot "Launch-MarkItDown-Vault.ps1")

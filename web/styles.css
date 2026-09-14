@@ -70,7 +70,9 @@ main { width: 100%; max-width: 1680px; margin: 0 auto; padding: 30px clamp(18px,
 .companion-copy strong { display: block; font-size: 14px; }
 .companion-copy p { margin: 4px 0 0; color: #596882; font-size: 12px; }
 .companion-copy ol { display: flex; gap: 22px; margin: 9px 0 0; padding-left: 18px; color: #536078; font-size: 11px; }
-.companion-actions { display: flex; flex: 0 0 auto; gap: 8px; }
+.companion-actions { display: flex; flex: 0 0 auto; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.connection-feedback { flex-basis: 100%; margin: 2px 0 0; color: #536078; font-size: 11px; line-height: 1.45; text-align: right; }
+.connection-feedback.error { color: #a13c45; }
 .view { display: none; }
 .view.active { display: block; animation: reveal .18s ease-out; }
 @keyframes reveal { from { opacity: .4; transform: translateY(4px); } }
@@ -226,6 +228,13 @@ dialog::backdrop { background: rgba(10,18,32,.55); backdrop-filter: blur(3px); }
 .dialog-head h2, .preview-head h2 { margin: 4px 0 0; font-size: 20px; }
 .field-help { color: #8791a4; font-size: 10px; margin: 7px 0 0; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 22px; }
+.install-intro { margin: 0 0 16px; color: #596882; font-size: 12px; line-height: 1.6; }
+.install-steps { display: grid; gap: 12px; margin: 0; padding-left: 25px; }
+.install-steps li { padding-left: 4px; color: var(--blue); }
+.install-steps b, .install-steps span { display: block; }
+.install-steps b { color: var(--ink); font-size: 13px; }
+.install-steps span { margin-top: 3px; color: #657188; font-size: 11px; line-height: 1.45; }
+.install-note { margin: 17px 0 0; padding: 11px 12px; border-radius: 8px; background: var(--blue-wash); color: #425476; font-size: 11px; line-height: 1.5; }
 .secondary-button, .primary-small { display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; padding: 8px 12px; font-weight: 700; font-size: 11px; text-decoration: none; }
 .secondary-button { border: 1px solid var(--line); background: #fff; color: var(--ink); }
 .primary-small { border: 1px solid var(--blue); background: var(--blue); color: #fff; }
@@ -269,6 +278,7 @@ dialog::backdrop { background: rgba(10,18,32,.55); backdrop-filter: blur(3px); }
   .companion-banner, .companion-copy ol { align-items: stretch; flex-direction: column; }
   .companion-actions { width: 100%; }
   .companion-actions > * { flex: 1; }
+  .companion-actions .connection-feedback { flex-basis: 100%; text-align: left; }
   .section-intro { align-items: flex-start; flex-direction: column; gap: 7px; }
   .powered-mark { width: 100%; justify-content: center; }
   .privacy-guarantee { grid-template-columns: auto minmax(0, 1fr); align-items: start; padding: 14px; }
@@ -295,6 +305,7 @@ dialog::backdrop { background: rgba(10,18,32,.55); backdrop-filter: blur(3px); }
 .main-column .companion-copy strong { font-size: 21px; }
 .main-column .companion-copy p { font-size: 18px; }
 .main-column .companion-copy ol { font-size: 16.5px; line-height: 1.5; }
+.main-column .connection-feedback { font-size: 16.5px; }
 .main-column .privacy-guarantee strong { font-size: 22.5px; }
 .main-column .privacy-guarantee p { font-size: 16.5px; }
 .main-column .local-only-seal { font-size: 15px; }
@@ -359,6 +370,9 @@ dialog::backdrop { background: rgba(10,18,32,.55); backdrop-filter: blur(3px); }
 .dialog-card label > span,
 .preview-card label > span { font-size: 16.5px; }
 .field-help { font-size: 15px; }
+.install-intro { font-size: 18px; }
+.install-steps b { font-size: 19.5px; }
+.install-steps span, .install-note { font-size: 16.5px; }
 .secondary-button,
 .primary-small { font-size: 16.5px; }
 .preview-meta { font-size: 15px; }
